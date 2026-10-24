@@ -1,1 +1,4 @@
- a10_single_hru            SWAT+ 2026-06-18        MODULAR Rev 2026.62.0.0                                
+ a10_single_hru            SWAT+ 2026-06-16        MODULAR Rev 2026.62                                    
+  jday,   mon,   day,    yr,   unit , gis_id , name           ,           sedyld,          sedorgn,          sedorgp,          surqno3,          lat3no3,         surqsolp,             usle,          sedminp,          tileno3,          lchlabp,         tilelabp,           satexn,    plant_cov   ,    mgt_ops                   ,       percn
+      ,      ,      ,      ,        ,        ,                ,              tha,             kgha,             kgha,             kgha,             kgha,             kgha,             tons,             kgha,             kgha,             kgha,             kgha,             kgha,                ,                              ,        kgha
+365,12,31,2025,       1,       1,a10_single_hru           ,0.120808,0.584454,0.693728E-1,0.335301E-1,0.485661E-4,0.145200E-2,0.515270E-1,0.291240E-1,0.00000,0.00000,0.00000,0.00000

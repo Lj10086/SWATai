@@ -23,7 +23,7 @@ from ..plan import MEASURED_ROTATION, MONTH_DEPTH_MAX, N_GROWING, N_YEARS, year_
 from ..rewarders import average
 from ..schedule import GROWING_MONTHS, _md
 from ..windows import TEST_YEARS, TRAIN_YEARS
-from .common import ROOT, RUNS, mean, minimise, row
+from .common import ROOT, RUNS, default_workers, mean, minimise, row
 from .exp1_controller import X0, decode, run_controller
 
 IRR_CSV = ROOT / "data" / "irrigation_gracenet.csv"
@@ -70,10 +70,7 @@ def fit_loss(rendered: np.ndarray, target: np.ndarray, total: float) -> float:
 
 
 def neg_fit(abc, prices) -> float:
-    try:
-        sim = run_controller(abc, FIT_START, prices)
-    except Exception:
-        return 1e12
+    sim = run_controller(abc, FIT_START, prices)
     return fit_loss(rendered_monthly_mm(sim["x"]), logged_monthly_mm(), logged_total_mm())
 
 
@@ -82,7 +79,7 @@ def main(argv=None) -> dict:
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--evals", type=int, default=220)
     ap.add_argument("--seed", type=int, default=0)
-    ap.add_argument("--workers", type=int, default=4)
+    ap.add_argument("--workers", type=int, default=default_workers())
     ap.add_argument("--from-fit", type=Path, default=None, help="reuse (a, b, c); only re-score")
     ap.add_argument("--no3-price", type=float, default=0.0, help="for scoring only")
     ap.add_argument("--out", type=Path, default=RUNS / "exp1_grower_rule.json")

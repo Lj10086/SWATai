@@ -3,8 +3,8 @@
     "engine": "swatplus_rev62.0.0",
     "platform": "macOS-26.4-arm64-arm-64bit",
     "machine": "arm64",
-    "regenerated": "2026-09-10",
-    "model": "2026-09-10 refit: the five parameters left on disk by the 2026-07-31 fit were orphans of the pre-rule-11b crop coefficients. epco returned to REF-sourced 0.50 (it has a source value and is unidentified \u2014 it was absorbing alfalfa's workbook bias and manufacturing the leaching column), corn/barl days_mat returned to engine stock 120/105 (unidentified / bound-pinned), alfa.lai_min pinned at 1.75 (inert) and dropped from PARAMS, orgn_min refit to 0.00091 with n_perc and fr_hum_act held at sourced 0.20/0.02.",
+    "regenerated": "2026-10-24",
+    "model": "weather switched to gridMET at the field point (port_gridmet.py), pet_co refit 0.964 -> 0.958 to AgriMet ETos",
     "note": "Regression gate. A different SWAT+ build (e.g. a Linux/WSL ELF engine) must reproduce these numbers; a deviation is build disagreement, not a code bug. Regenerate with scripts/rebaseline.py."
   },
   "yields": [
@@ -12,59 +12,59 @@
       "year": 2013,
       "crop": "corn",
       "cuts": 1.0,
-      "yld_t": 18.6966648
+      "yld_t": 20.1581669
     },
     {
       "year": 2014,
       "crop": "barl",
       "cuts": 1.0,
-      "yld_t": 8.99239445
+      "yld_t": 9.3845377
     },
     {
       "year": 2015,
       "crop": "alfa",
       "cuts": 2.0,
-      "yld_t": 13.6753998
+      "yld_t": 14.17486
     },
     {
       "year": 2016,
       "crop": "alfa",
       "cuts": 3.0,
-      "yld_t": 21.4366875
+      "yld_t": 22.1891403
     },
     {
       "year": 2017,
       "crop": "alfa",
       "cuts": 3.0,
-      "yld_t": 24.4631882
+      "yld_t": 25.6474285
     },
     {
       "year": 2018,
       "crop": "corn",
       "cuts": 1.0,
-      "yld_t": 20.8765125
+      "yld_t": 20.734993
     },
     {
       "year": 2019,
       "crop": "barl",
       "cuts": 1.0,
-      "yld_t": 6.03792763
+      "yld_t": 5.88839579
     }
   ],
   "water_mean": {
-    "precip": 281.8311428571428,
-    "et": 828.62,
-    "pet": 1156.9458571428572,
-    "perc": 1.7937142857142856,
+    "precip": 278.9714285714286,
+    "et": 829.4700000000001,
+    "pet": 1156.2951428571428,
+    "perc": 0.8735714285714284,
     "irr": 562.6825714285714
   },
   "nstress_days": {
-    "2013": 2.598,
-    "2014": 1.589,
+    "2013": 4.357,
+    "2014": 3.895,
     "2015": 0.0,
     "2016": 0.0,
     "2017": 0.0,
-    "2018": 11.539,
-    "2019": 35.696
+    "2018": 9.878,
+    "2019": 38.508
   }
 }

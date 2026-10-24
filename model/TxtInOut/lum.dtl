@@ -203,24 +203,6 @@ act_typ                    obj   obj_num              name            option    
 fertilize                  hru         0        side_dress            elem_n      50.00000       5.00000         broadcast  y   n   
 fertilize                  hru         0        side_dress            elem_p      50.00000       2.00000         broadcast  n   y   
 
-name                     conds      alts      acts       !auto nitrogen: fertilize elem_n to demand whenever the growing plant becomes N-stressed
-auto_fert_n                  3         1         1  
-var                        obj   obj_num           lim_var            lim_op     lim_const      alt1  
-n_stress                   hru         0              null                 -       0.90000         <       !nitrogen stress factor < this value (1.0 = unstressed, 0.0 = fully stressed) - fires as soon as the plant slips just above stressed, so demand is met before yield is lost
-plant_gro                  hru         0                 y                 -       1.00000         =       !plant is growing - never fertilize bare ground, where there is no uptake and the applied N/P would only be available to leach or run off
-phu_plant                  hru         0           phu_mat                 -       1.05000         <       !heat units to maturity - don't fertilize after plant reaches maturity, when further applications cannot be taken up
-act_typ                    obj   obj_num              name            option         const        const2                fp  outcome           
-fertilize                  hru         0        side_dress            elem_n      50.00000       5.00000         broadcast  y   !50 kg/ha elemental N broadcast per event, max 5 events per year (250 kg N/ha ceiling)
-
-name                     conds      alts      acts       !auto phosphorus: fertilize elem_p to demand whenever the growing plant becomes P-stressed
-auto_fert_p                  3         1         1  
-var                        obj   obj_num           lim_var            lim_op     lim_const      alt1  
-p_stress                   hru         0              null                 -       0.90000         <       !phosphorus stress factor < this value (1.0 = unstressed, 0.0 = fully stressed) - fires as soon as the plant slips just above stressed, so demand is met before yield is lost
-plant_gro                  hru         0                 y                 -       1.00000         =       !plant is growing - never fertilize bare ground, where there is no uptake and the applied N/P would only be available to leach or run off
-phu_plant                  hru         0           phu_mat                 -       1.05000         <       !heat units to maturity - don't fertilize after plant reaches maturity, when further applications cannot be taken up
-act_typ                    obj   obj_num              name            option         const        const2                fp  outcome           
-fertilize                  hru         0        side_dress            elem_p      50.00000       2.00000         broadcast  y   !50 kg/ha elemental P broadcast per event, max 2 events per year (100 kg P/ha ceiling)
-
 name                     conds      alts      acts       !inject 0.33 kg/ha of pesticide ffa randomly (unformly distributed) to 30% (0.3) of fields between day 121 and 181 - 1 time per year
 pst_unif                     1         1         1  
 var                        obj   obj_num           lim_var            lim_op     lim_const      alt1  
@@ -425,3 +407,20 @@ act_typ                    obj   obj_num              name            option    
 irrigate                   aqu         1         sprinkler     sprinkler_ilm      25.00000      20.00000              null  y   n   
 irrigate                   res         1         sprinkler     sprinkler_ilm      25.00000      20.00000              null  n   y   
 
+name                     conds      alts      acts       !auto nitrogen: fertilize elem_n to demand whenever the growing plant becomes N-stressed
+auto_fert_n                  3         1         1  
+var                        obj   obj_num           lim_var            lim_op     lim_const      alt1  
+n_stress                   hru         0              null                 -       0.90000         <       !nitrogen stress factor < this value (1.0 = unstressed, 0.0 = fully stressed) - fires as soon as the plant slips just above stressed, so demand is met before yield is lost
+plant_gro                  hru         0                 y                 -       1.00000         =       !plant is growing - never fertilize bare ground, where there is no uptake and the applied N/P would only be available to leach or run off
+phu_plant                  hru         0           phu_mat                 -       1.05000         <       !heat units to maturity - don't fertilize after plant reaches maturity, when further applications cannot be taken up
+act_typ                    obj   obj_num              name            option         const        const2                fp  outcome           
+fertilize                  hru         0        side_dress            elem_n      50.00000       5.00000         broadcast  y   !50 kg/ha elemental N broadcast per event, max 5 events per year (250 kg N/ha ceiling)
+
+name                     conds      alts      acts       !auto phosphorus: fertilize elem_p to demand whenever the growing plant becomes P-stressed
+auto_fert_p                  3         1         1  
+var                        obj   obj_num           lim_var            lim_op     lim_const      alt1  
+p_stress                   hru         0              null                 -       0.90000         <       !phosphorus stress factor < this value (1.0 = unstressed, 0.0 = fully stressed) - fires as soon as the plant slips just above stressed, so demand is met before yield is lost
+plant_gro                  hru         0                 y                 -       1.00000         =       !plant is growing - never fertilize bare ground, where there is no uptake and the applied N/P would only be available to leach or run off
+phu_plant                  hru         0           phu_mat                 -       1.05000         <       !heat units to maturity - don't fertilize after plant reaches maturity, when further applications cannot be taken up
+act_typ                    obj   obj_num              name            option         const        const2                fp  outcome           
+fertilize                  hru         0        side_dress            elem_p      50.00000       2.00000         broadcast  y   !50 kg/ha elemental P broadcast per event, max 2 events per year (100 kg P/ha ceiling)

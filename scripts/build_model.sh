@@ -4,7 +4,7 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 TEMPLATE="$HOME/Downloads/a10_single_hru/Scenarios/Default/TxtInOut"
-TIO="$ROOT/model/TxtInOut"
+TIO="$ROOT/model/rotation/TxtInOut"
 
 echo "== reset TxtInOut from template =="
 # Save the rev 62 engines (Mac + Linux) before wiping TxtInOut.
@@ -24,7 +24,8 @@ uv run --with openpyxl python scripts/extract_primary.py   # refresh data/ from 
 echo "== apply ports =="
 cd "$ROOT"
 uv run python scripts/port_wgn.py
-uv run python scripts/port_agrimet.py     # pcp/tmp/slr/hmd/wnd, all measured (AgriMet TWFI)
+uv run python scripts/port_agrimet.py     # wiring + data/observed_et_agrimet.csv (the ET target)
+uv run python scripts/port_gridmet.py     # pcp/tmp/slr/hmd/wnd from gridMET at the field point
 uv run python scripts/port_soil.py
 uv run python scripts/port_management.py
 uv run python scripts/port_crops.py

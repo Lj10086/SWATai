@@ -1,0 +1,4 @@
+ a10_single_hru            SWAT+ @TODAY@        MODULAR Rev @YEAR@.@SWAT_VERSION@                         
+        jday        mon        day         yr            unit              gis_id     name                plant_c    rsd_decay_c    harv_stov_c         emit_c
+                                                                                                          kg C/ha        kg C/ha        kg C/ha        kg C/ha
+         365          12          31        2025           1                     1 hru1              0.0000000E+00  0.0000000E+00   1.146332      0.0000000E+00  0.0000000E+00  0.0000000E+00

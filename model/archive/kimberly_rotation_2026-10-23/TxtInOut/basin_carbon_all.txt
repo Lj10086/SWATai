@@ -1,0 +1,3 @@
+ a10_single_hru            SWAT+ @TODAY@        MODULAR Rev @YEAR@.@SWAT_VERSION@                         
+        jday         yr            org_soilc        org_plc       org_resc
+                                       kg/ha          kg/ha          kg/ha

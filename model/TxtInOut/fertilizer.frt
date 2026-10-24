@@ -59,7 +59,3 @@ ceap_p_n               0.42000       0.00000       0.58000       0.00000       0
 ceap_p_p               0.00000       0.65000       0.00000       0.35000       0.00000       ceap_manure  Ceap_Manure_P_Fr_Past
 ceap_h_n               0.41000       0.00000       0.59000       0.00000       0.38100       ceap_manure  Ceap_Manure_N_Fr_Hay
 ceap_h_p               0.00000       0.65300       0.00000       0.34700       0.00000       ceap_manure  Ceap_Manure_P_Fr_Hay
-gn2013                   0.00260       0.00466       0.01040       0.00024       0.99000          null  GRACEnet_manure
-gn2014                   0.00390       0.00665       0.01560       0.00035       0.99000          null  GRACEnet_manure
-gn2018                   0.00082       0.00199       0.00328       0.00011       0.99000          null  GRACEnet_manure
-gn2019                   0.00082       0.00722       0.00328       0.00038       0.99000          null  GRACEnet_manure

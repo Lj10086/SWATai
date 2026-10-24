@@ -16,7 +16,8 @@ from .manifest import input_files
 from .printprt import GYM_OUTPUTS, trim
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-TXTINOUT = PROJECT_ROOT / "model" / "TxtInOut"
+#: The Kimberly rotation model (paper Exp 1/2). Other models are passed explicitly (see spec.py).
+TXTINOUT = PROJECT_ROOT / "model" / "rotation" / "TxtInOut"
 
 #: Files an action may rewrite.
 EDITABLE = frozenset({
@@ -27,6 +28,18 @@ EDITABLE = frozenset({
     "time.sim",         # simulation window (replay mode truncates it)
     "landuse.lum",      # schedule/community wiring
 })
+
+
+def model_hash(txtinout: Path = TXTINOUT) -> str:
+    """Hash of every input the engine reads plus the engine binary; part of stage configs."""
+    import hashlib
+
+    txtinout = Path(txtinout)
+    names = input_files(txtinout) | {find_engine(txtinout).name}
+    h = hashlib.sha256()
+    for name in sorted(names):
+        h.update(name.encode() + b"\0" + (txtinout / name).read_bytes())
+    return h.hexdigest()[:12]
 
 
 class FastRunner:
@@ -61,8 +74,11 @@ class FastRunner:
         # copy2 preserves the executable bit, so the engine stays runnable.
         self.engine = self.workdir / self._engine_name
 
-        #: Engine runs; the unit PPO and CMA-ES budgets are matched in.
+        #: Engine runs executed, and calls answered from the previous run (identical edits).
         self.n_runs = 0
+        self.n_skipped = 0
+        self._last: dict[str, str] | None = None
+        self._last_listing: frozenset[tuple[str, int, int]] = frozenset()
 
         if trim_outputs:
             pp = self.workdir / "print.prt"
@@ -78,22 +94,40 @@ class FastRunner:
     # -- running -------------------------------------------------------------------
 
     def run(self, edits: Mapping[str, str] | None = None, timeout: float = 600.0) -> Path:
-        """Apply ``edits`` (filename -> full file content), run SWAT+, return the work dir."""
-        edits = edits or {}
+        """Apply ``edits`` (filename -> full file content), run SWAT+, return the work dir.
+
+        Identical edits to the previous successful run reuse its outputs (SWAT+ is
+        deterministic), provided no file in the work dir was added, removed or rewritten since;
+        counted in ``n_skipped``.
+        """
+        edits = dict(edits or {})
         unknown = set(edits) - self.editable
         if unknown:
             raise ValueError(
                 f"Refusing to write {sorted(unknown)}; editable files are "
                 f"{sorted(self.editable)}"
             )
+        if edits == self._last and self._listing() == self._last_listing:
+            self.n_skipped += 1
+            return self.workdir
 
+        self._last = None
         self._reset()
         for name, content in edits.items():
             (self.workdir / name).write_text(content)
 
         self.n_runs += 1
         run_engine(self.engine, self.workdir, timeout=timeout)
+        self._last, self._last_listing = edits, self._listing()
         return self.workdir
+
+    def _listing(self) -> frozenset[tuple[str, int, int]]:
+        """Every file's (name, size, mtime): any write since the last run forces a new one."""
+        out = []
+        for p in self.workdir.iterdir():
+            st = p.stat()
+            out.append((p.name, st.st_size, st.st_mtime_ns))
+        return frozenset(out)
 
     def _reset(self) -> None:
         """Delete every non-input file and restore the editable inputs to pristine content."""
@@ -116,7 +150,7 @@ class FastRunner:
                 f"{name} not produced. If it is a table you need, add it to "
                 f"printprt.GYM_OUTPUTS — the runner trims print.prt by default."
             )
-        df = pd.read_csv(path, sep=r"\s+", skiprows=1, header=0, engine="python")
+        df = pd.read_csv(path, sep=r"\s+", skiprows=1, header=0, engine="c")
         if len(df) and pd.to_numeric(pd.Series([df.iloc[0, 0]]), errors="coerce").isna().all():
             df = df.iloc[1:].reset_index(drop=True)
         for col in df.columns:

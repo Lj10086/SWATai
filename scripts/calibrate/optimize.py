@@ -12,6 +12,7 @@ import argparse
 import json
 import sys
 import time
+import traceback
 from pathlib import Path
 
 import numpy as np
@@ -41,6 +42,9 @@ PARAMS = [
 #: Both terms in %. NO3 down-weighted: alfalfa-year misses are unreachable (rule 13).
 WEIGHTS = {"yield": 1.0, "no3": 0.25}
 FAILED = 1e6
+#: Abort once this share of evaluations has raised (and at least MIN_FAILURES).
+MAX_FAILURE_FRAC = 0.01
+MIN_FAILURES = 3
 
 #: Fixed kg N/ha scale for the NO3 miss (mean measured stock).
 NO3_SCALE = 160.0
@@ -125,7 +129,7 @@ def main() -> None:
     sources = {f: (TXTINOUT / f).read_text() for f in CALIBRATABLE}
     defaults = read_defaults(TXTINOUT, PARAMS)
     started = time.time()
-    calls = {"n": 0, "best": np.inf}
+    calls = {"n": 0, "best": np.inf, "failed": 0, "first_tb": None}
 
     # Held params are excluded from the search, not just from the write.
     free = [p for p in PARAMS if p.name not in args.hold]
@@ -146,9 +150,16 @@ def main() -> None:
             calls["n"] += 1
             try:
                 s = score(terms(runner, sources, expand(x)))
+                if not np.isfinite(s):
+                    raise ValueError(f"non-finite score {s} at {expand(x)}")
             except Exception:
-                return FAILED
-            if not np.isfinite(s):
+                # A broken run is not a bad fit: count it, and stop before DE routes around
+                # a model that no longer runs.
+                calls["failed"] += 1
+                calls["first_tb"] = calls["first_tb"] or traceback.format_exc()
+                if calls["failed"] >= max(MIN_FAILURES, MAX_FAILURE_FRAC * calls["n"]):
+                    raise RuntimeError(f"{calls['failed']} of {calls['n']} evaluations failed;"
+                                       f" first:\n{calls['first_tb']}") from None
                 return FAILED
             if s < calls["best"]:
                 calls["best"] = s

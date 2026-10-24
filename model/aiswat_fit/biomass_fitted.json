@@ -1,0 +1,55 @@
+{
+  "source": "scripts/biomass_calibrate.py",
+  "mode": "hold-tmp",
+  "window": [
+    1996,
+    2025
+  ],
+  "targets": "data/biomass_targets.csv",
+  "np_defaults": "data/crop_np_default.csv",
+  "note": "n_scale/p_scale multiply the DEFAULT BN1-3/BP1-3 in np_defaults",
+  "crops": {
+    "alfa": {
+      "bm_e": 12.75905340755249,
+      "tmp_opt": 19.956201274860575,
+      "tmp_base": 2.0529614535896332,
+      "n_scale": 2.044797197832695,
+      "p_scale": 1.8323158470252643
+    },
+    "barl": {
+      "bm_e": 26.822419601315612,
+      "tmp_opt": 25.0,
+      "tmp_base": 0.0,
+      "n_scale": 1.277302528710944,
+      "p_scale": 2.096030793583126
+    },
+    "corn": {
+      "bm_e": 44.84584833214267,
+      "tmp_opt": 25.0,
+      "tmp_base": 2.0,
+      "n_scale": 1.0171497314467899,
+      "p_scale": 1.7244146574195995
+    },
+    "pota": {
+      "bm_e": 38.896479603680746,
+      "tmp_opt": 22.00150659058105,
+      "tmp_base": 3.0002436391017726,
+      "n_scale": 1.8220720290751482,
+      "p_scale": 2.0916387572707533
+    },
+    "sgbt": {
+      "bm_e": 27.72597813612544,
+      "tmp_opt": 18.23378221949842,
+      "tmp_base": 4.0647345260683885,
+      "n_scale": 1.5272117325505832,
+      "p_scale": 1.2237842545977895
+    },
+    "wwht": {
+      "bm_e": 13.480461215408216,
+      "tmp_opt": 18.11214613635758,
+      "tmp_base": 0.006399981784319319,
+      "n_scale": 0.8977601111059907,
+      "p_scale": 2.297648329756746
+    }
+  }
+}

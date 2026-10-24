@@ -11,7 +11,7 @@ import pandas as pd
 from swat_gym.params import set_value
 
 ROOT = Path(__file__).resolve().parents[1]
-TIO = ROOT / "model" / "TxtInOut"
+TIO = ROOT / "model" / "rotation" / "TxtInOut"
 CROP_CSV = ROOT / "data" / "crop_params_swat.csv"
 
 # SWAT crop code (CPNM in the site table) -> SWAT+ plants.plt name

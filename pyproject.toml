@@ -23,6 +23,9 @@ rl = [
     "stable-baselines3>=2.9.0",
     "torch>=2.13.0",
 ]
+calib = [
+    "scipy>=1.15.3",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["src/swat_gym/tests"]

@@ -231,7 +231,7 @@ def data_yield():
 
 
 def data_exp1_profit() -> tuple[str, list[str], list[list[str]], str]:
-    ceiling = json.loads((RUNS / "exp1_ceiling.json").read_text())
+    ceiling = json.loads((RUNS / "exp1_ceiling.json").read_text())["result"]  # a stage file
     full = json.loads((RUNS / "exp1_irrigation.json").read_text())
     controller = json.loads((RUNS / "exp1_controller.json").read_text())
     grower_path = RUNS / "exp1_grower_rule.json"

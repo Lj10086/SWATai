@@ -1,0 +1,8 @@
+crop,plants_plt,crop_name,sheet_phu,emerge,harv1,harv2,harv3,harv4,irr_start,irr_end
+ALFA,alfa,Alfalfa,default,03-01,06-15,07-30,08-30,10-15,04-15,10-09
+BARL,barl,Spring Barley,1800,04-15,08-10,,,,04-15,07-25
+CSIL,corn,Corn Silage,1800,06-01,09-25,,,,05-25,09-18
+POTA,pota,Potato,2000,05-20,09-10,,,,05-15,09-01
+PTBN,ptbn,Pinto Beans,1000,07-01,09-25,,,,06-26,09-10
+WWHT,wwht,Winter Wheat,2000,03-01,07-31,,,,04-15,07-16
+SGBT,sgbt,Sugarbeet,2300,05-01,10-05,,,,04-20,09-25

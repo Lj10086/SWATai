@@ -1,0 +1,5 @@
+calibration.cal: heat units to maturity, written by scripts/monoculture.py
+1
+NAME CHG_TYP VAL CONDS LYR1 LYR2 YEAR1 YEAR2 DAY1 DAY2 OBJ_TOT
+phu_mat absval 1664.6 1 0 0 0 0 0 0 1 1
+plant = 0 barl

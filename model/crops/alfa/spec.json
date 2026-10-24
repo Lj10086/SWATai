@@ -1,0 +1,57 @@
+{
+  "name": "alfa",
+  "plant": "alfa",
+  "perennial": true,
+  "emerge": [
+    3,
+    1
+  ],
+  "harvests": [
+    [
+      6,
+      15
+    ],
+    [
+      7,
+      30
+    ],
+    [
+      8,
+      30
+    ],
+    [
+      10,
+      15
+    ]
+  ],
+  "irrigation_windows_doy": [
+    [
+      105,
+      159
+    ],
+    [
+      167,
+      204
+    ],
+    [
+      212,
+      235
+    ],
+    [
+      243,
+      281
+    ]
+  ],
+  "auto_irrigation": "irr_win_alfa",
+  "auto_fert_n": "auto_fert_n",
+  "auto_irr_mm": 9.0,
+  "source": {
+    "built_by": "Ai-SWAT-Plus et_calibrate.CropFit._build + monoculture.apply_et_fit",
+    "aiswat_dir": "/Users/ericdu/Desktop/projects/Ai-SWAT-Plus/calibration",
+    "irr_sw_frac": 0.95,
+    "copied": "2026-10-23",
+    "inputs_sha256": "96f8b4d050f1649b",
+    "weather": "gridMET at the field point (scripts/port_gridmet.py); the Ai-SWAT-Plus ET fit was made on AgriMet TWFI and is not refitted"
+  },
+  "batchable": false
+}

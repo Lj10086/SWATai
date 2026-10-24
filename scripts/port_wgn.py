@@ -11,7 +11,7 @@ from pathlib import Path
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
-TIO = ROOT / "model" / "TxtInOut"
+TIO = ROOT / "model" / "rotation" / "TxtInOut"
 WGN_CSV = ROOT / "data" / "reference_wgn_sub14.csv"
 
 STATION = "IDTWINFALLSWS0"

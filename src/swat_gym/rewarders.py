@@ -75,6 +75,13 @@ class Prices:
     label: str = "unnamed"
     fert_n: float = 0.0         #: $ per kg mineral N
     fert_op: float = 0.0        #: $ per ha per application pass
+    fert_p: float = 0.0         #: $ per kg P (crop models' auto-P table; the rotation has none)
+
+    def key(self) -> dict:
+        """Every value, for stage configs: a label alone hides a corrected price."""
+        return {"label": self.label, "crop": dict(sorted(self.crop.items())),
+                "water": self.water, "manure": self.manure, "fert_n": self.fert_n,
+                "fert_op": self.fert_op, "fert_p": self.fert_p}
 
     def alfalfa_ratio(self, numeraire: str = "corn") -> float:
         return self.crop["alfa"] / self.crop[numeraire]
@@ -86,31 +93,49 @@ class Prices:
         return replace(self, crop=crop, label=f"{self.label}@ratio={ratio:g}")
 
 
-# Idaho marketing-year averages, USDA NASS. Barley priced as grain.
+# Idaho marketing-year averages, USDA NASS Crop Values (2022-23: Feb 2025 summary; 2024:
+# final values from the Feb 2026 summary, which revised the preliminary 154.00 / 6.70 / 5.80).
+# Barley priced as grain.
 _NASS = {  # year: (alfalfa hay $/ton, barley $/bu, corn grain $/bu)
     2022: (272.00, 7.61, 7.37),
     2023: (204.00, 7.76, 5.53),
-    2024: (154.00, 6.70, 5.80),
+    2024: (153.00, 6.44, 5.78),
 }
+# Crop models only (swat_gym.crop). Same source; 2024 final (winter wheat prelim. was 5.55).
+_NASS_CROPS = {  # year: (winter wheat $/bu, sugarbeet $/ton as delivered)
+    2022: (7.97, 67.00),
+    2023: (6.77, 74.40),
+    2024: (5.48, 53.70),
+}
+#: Sugarbeet root dry-matter fraction: SWAT+ yields are dry, NASS prices are per delivered
+#: (fresh) ton. Measured at Kimberly: root moisture 74.8 % in the synthetic-fertilizer plots
+#: (Leytem et al. 2025, Crop Sci., doi:10.1002/csc2.70144, Table 5; 17.7 Mg DM of 70.7 Mg
+#: fresh), matching the crop model's synthetic N. Manure plots run 76.6-77.8 % (DM 22-23 %).
+SGBT_DM = 1.0 - 0.748
 
 # Water $/mm/ha = WD01 rental (opportunity cost) + pumping energy.
 
 M3_PER_ACRE_FOOT = 1233.48
 
-#: WD01 common-pool Tier 1, all fees, $/af.
+#: WD01 2025 Rental Pool Procedures 5.3.101/5.3.103: common-pool Tier 1 (above Milner)
+#: $25.18 + 10 % Board surcharge + $1.30 administrative fee, $/af.
 WD01_RENTAL_AF = 25.18 * 1.10 + 1.30          # = 29.00
-#: WD01 Tier 7, top of published range, $/af.
-WD01_RENTAL_AF_TIER7 = 55.0
+#: Same document 10.7.103/10.7.107(c): assignment-pool Tier 7, the top of the published range,
+#: all-in like Tier 1 ($55.00 + $5.50 + $1.30). Was the bare $55.00 before 2026-10-24.
+WD01_RENTAL_AF_TIER7 = 55.00 * 1.10 + 1.30    # = 61.80
 
 WATER_RENTAL = WD01_RENTAL_AF / M3_PER_ACRE_FOOT * M3_PER_MM_HA     # 0.235 $/mm/ha
 
 #: Idaho Power Schedule 24 tariff.
 IPC_SCHED24_ENERGY_PER_KWH = 0.067222
 IPC_SCHED24_DEMAND_PER_KW_MONTH = 16.50
-#: Assumed, not measured.
+#: Assumed, no published site value: total dynamic head of a canal-fed sprinkler (no well
+#: lift), ~64 psi; demand-charge load factor. Both enter only the pumping term; breakevens.
 PUMP_HEAD_M = 45.0
-PUMP_EFFICIENCY = 0.65
 PUMP_LOAD_FACTOR = 0.60
+#: Nebraska Pumping Plant Performance Criteria, electric: 75 % pump x 88 % motor (0.885 water
+#: hp-h per kWh; e.g. NC State Extension, "Pumping Plant Performance").
+PUMP_EFFICIENCY = 0.75 * 0.88
 HOURS_PER_MONTH = 730.0
 
 PUMP_KWH_PER_MM_HA = 9810.0 * M3_PER_MM_HA * PUMP_HEAD_M / (3.6e6 * PUMP_EFFICIENCY)  # 1.89
@@ -128,8 +153,14 @@ WATER_PRICE_RANGE = (WATER_RENTAL,
 #: so this lowers the human bar; report breakeven if a result depends on it.
 DEFAULT_MANURE = 7.20 / 0.907185
 
-#: Urea $644/short ton, 46 % N -> $/kg N.
+#: Urea $644/short ton, 46 % N -> $/kg N. USDA AMS Inter-Mountain West, w/e 2025-04-04.
 DEFAULT_FERT_N = 644.0 / (2000.0 * 0.46 * 0.453592)
+
+#: MAP (11-52-0) $934.11/short ton, same report and week. The 11 % N is credited at the
+#: urea price and the rest charged to P (P2O5 is 43.64 % P) -> $/kg P.
+_MAP_KG = 2000.0 * 0.453592
+DEFAULT_FERT_P = ((934.11 - 0.11 * _MAP_KG * DEFAULT_FERT_N)
+                  / (0.52 * 0.4364 * _MAP_KG))
 
 #: Per-pass application cost, $/ha ($15/acre). Without it, splitting N is free.
 DEFAULT_FERT_OP = 15.00 / 0.404686
@@ -137,16 +168,22 @@ DEFAULT_FERT_OP = 15.00 / 0.404686
 
 def nass(year: int, *, water: float = DEFAULT_WATER, manure: float = DEFAULT_MANURE,
          fert_n: float = DEFAULT_FERT_N, fert_op: float = DEFAULT_FERT_OP,
-         silage_multiplier: float = 9.0) -> Prices:
+         fert_p: float = DEFAULT_FERT_P, silage_multiplier: float = 9.0) -> Prices:
     """Price vector for one NASS marketing year, in $/Mg DM."""
     hay, barl_bu, corn_bu = _NASS[year]
+    wheat_bu, beet_ton = _NASS_CROPS[year]
     return Prices(
         crop={
             "alfa": _hay_to_mg_dm(hay),
-            "barl": _grain_to_mg_dm(barl_bu, lb_per_bu=48.0, moisture=0.135),
+            # Base moisture and bushel weight: Sadaka et al., Univ. Arkansas FSA1078 (2021),
+            # barley 48 lb/bu at 14.5 %, wheat 60 lb/bu at 13.5 % (Tables 1-2).
+            "barl": _grain_to_mg_dm(barl_bu, lb_per_bu=48.0, moisture=0.145),
             "corn": _silage_from_grain(corn_bu, multiplier=silage_multiplier),
+            "wwht": _grain_to_mg_dm(wheat_bu, lb_per_bu=60.0, moisture=0.135),
+            "sgbt": beet_ton / (TON * SGBT_DM),
         },
-        water=water, manure=manure, fert_n=fert_n, fert_op=fert_op, label=f"NASS{year}",
+        water=water, manure=manure, fert_n=fert_n, fert_op=fert_op, fert_p=fert_p,
+        label=f"NASS{year}",
     )
 
 
@@ -191,6 +228,12 @@ def profit(runner, prices: Prices, *, manure_mg: float | None = None,
            fert_n_kg: float | None = None, no3_price: float = 0.0) -> dict:
     """Rotation-total profit ($/ha) with separable terms. ``no3_price`` defaults to 0."""
     yields = runner.yields()
+    if yields.empty:
+        # Even zero water grows ~4 t corn; all-zero means no plan reached the HRU (e.g. the
+        # schedule name is not the one landuse.lum wires in). The engine exits 0 either way.
+        from .engine import EngineError
+        raise EngineError(f"no crop yielded anything in {runner.workdir}: is the schedule "
+                          "wired to the HRU (landuse.lum mgt name) and the window simulated?")
     wb = runner.read("hru_wb_yr.txt")
     aqu = runner.read("basin_aqu_yr.txt")
 

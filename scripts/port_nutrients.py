@@ -11,7 +11,7 @@ from pathlib import Path
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
-TIO = ROOT / "model" / "TxtInOut"
+TIO = ROOT / "model" / "rotation" / "TxtInOut"
 SOIL_CSV = ROOT / "data" / "soil_gracenet.csv"
 
 HRU_SOILNUT, HRU_TOPO, HRU_HYD = "soilnut1", "topohru1", "hyd1"

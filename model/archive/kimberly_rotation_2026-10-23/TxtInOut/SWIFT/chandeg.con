@@ -1,0 +1,3 @@
+chandeg.con: written by SWAT+ editor v4.0.0 on 2026-07-17 15:47 for SWAT+ rev. 62
+      id  name                gis_id          area           lat           lon          elev      lcha               wst       cst      ovfl      rule   out_tot
+       1  cha1                     1    1431.71000      42.55789    -114.30022             0         1    s42550n114350w         0         0         0         0

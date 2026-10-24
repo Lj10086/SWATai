@@ -31,7 +31,7 @@ from pathlib import Path
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
-TIO = ROOT / "model" / "TxtInOut"
+TIO = ROOT / "model" / "rotation" / "TxtInOut"
 AGRIMET = Path.home() / "Documents" / "Kimberly, Idaho" / "weather.csv"
 ET_CSV = ROOT / "data" / "observed_et_agrimet.csv"
 

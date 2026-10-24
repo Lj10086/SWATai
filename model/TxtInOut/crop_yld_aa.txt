@@ -1,1 +1,4 @@
- a10_single_hru            SWAT+ 2026-06-18        MODULAR Rev 2026.62.0.0                                
+ a10_single_hru            SWAT+ 2026-06-16        MODULAR Rev 2026.62                                    
+                                                                            --YIELD (kg/ha)--
+  jday   mon   day    yr    unit PLANTNM                         MASS          C           N           P
+   365    12    31  2025       1    csil                                                0.000       0.000       0.000       0.000

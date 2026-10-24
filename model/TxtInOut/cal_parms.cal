@@ -184,7 +184,7 @@ flo_init_mm                    aqu       0.00000       5.00000                mm
 hlife_n                        aqu       0.00000     365.00000              days  
 minp_init                      aqu       0.00000      10.00000                kg  
 no3_init                       aqu       0.00000      30.00000               ppm  
-phu_mat                        hru      50.00000    6000.00000             deg_C  
+phu_mat                        plt      50.00000    6000.00000             deg_C  
 lai_pot                        hru       0.01000      12.00000               m/m  
 harv_idx                       hru       0.01000       0.95000              null  
 drawdown_days                  rdt       0.05000    5000.00000              days  

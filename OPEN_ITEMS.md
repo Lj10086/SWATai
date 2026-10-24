@@ -55,7 +55,11 @@ Working checklist for PAPER.md. Numbers are cited elsewhere; don't renumber.
     +890.1 (mean +149.8 from one seed). `advantage_over_fixed` −328.7 / −632.2 / −193.8 (mean
     −384.9) is sign-consistent: PPO loses to matched-budget CMA. Don't average the adaptivity
     decomposition; estimate the seeds needed from this spread before more cluster time.
-    Re-check both on the refit model (#18).
+    Re-check both on the refit model (#18). **Confounded until rerun (2026-10-23):** those PPO
+    runs started from zero water (mean action 0.055, 48 % of actions clipped to 0) while CMA-ES
+    started at measured practice, and the renderer let a later month's water land in an
+    earlier, already-observed month. Both are fixed (residual actions; no carry-back); don't
+    cite these numbers as evidence about PPO.
 17. *Closed 2026-09-28.* PAPER.md has no Exp 3/4 sections; Exp 1 numbers there are pre-refit
     (#18).
 18. **All experiments must be (re-)run: `scripts/run_all.sh`.** Model refit 2026-09-10
@@ -69,10 +73,19 @@ Working checklist for PAPER.md. Numbers are cited elsewhere; don't renumber.
 20. **Grower rule** (`exp1_grower_rule`): controller fitted to the logs; a human bar that
     responds to weather. In `run_all.sh`. To do: run (#18), fill Table 3, disclose in §6.2
     (test-period weather, not fitted to profit, reference row), report fit R² and per-year totals.
-21. **PAPER.md describes the pre-2026-09-30 code.** Update: Exp 2 is monthly mineral N + April
-    manure on annual-crop years, irrigation at measured practice; there is no N cap (drop the
-    cap text around lines 182, 261, 283–296, 432); obs channel 10 is now "N applied this year"
-    (N lever) and the initial soil-water default is 250 mm.
+21. *Closed 2026-10-23.* PAPER.md §3–4 match the code: no N cap or repair, channel 10, the
+    nitrogen arm's action, 40/20 steps, prices ($7.94, $37.07, final 2024 NASS), ESS 1.25 and
+    the moving-block bootstrap (now implemented), restored A2 tests, the equal-search ceiling and
+    the controller's engine-run budget. Results sections (§6) still quote pre-fix numbers until
+    the rerun (#18).
+22. **Crop models (`model/crops`, `swat_gym.crop`, `scripts/bench_rl.py`).** Ai-SWAT-Plus
+    monoculture builds, copied; their yields are not validated against Kimberly, so quote
+    paired differences only. Sugarbeet price assumes 23 % root dry matter (unsourced). Report
+    any batching use with `tests/test_batch.py` passing: SWAT+ rev 62 keeps N/P demand per
+    plant, not per HRU (`pl_nut_demand.f90`; it also resets `uapd(ipl)` with a stale loop
+    index), so alfalfa breaking dormancy reads the previous HRU's demand. The same stale value
+    exists in single-HRU runs (same HRU, previous day): small, but a real engine bug worth
+    reporting upstream and fixing in the Ai-SWAT-Plus engine build.
 
 ## Moved to supplementary material (must exist before submission)
 

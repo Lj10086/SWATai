@@ -4,7 +4,8 @@ from __future__ import annotations
 import pytest
 
 from swat_gym.experiments import exp1_grower_rule as g
-from swat_gym.plan import MONTH_DEPTH_MAX, N_GROWING, N_YEARS
+from swat_gym.plan import (MEASURED_ROTATION, MONTH_DEPTH_MAX, N_GROWING, N_YEARS,
+                           irrigable_months, undeliverable_mm)
 
 
 def test_logged_target_is_the_measured_record():
@@ -14,9 +15,17 @@ def test_logged_target_is_the_measured_record():
     assert 0 < g.logged_total_mm() - t.sum() < 0.02 * g.logged_total_mm()  # October
 
 
-def test_renderer_preserves_volume():
+def test_renderer_preserves_volume_it_can_place():
+    """Rendered + dropped == logged; only months after harvest drop water (none carried)."""
     t = g.logged_monthly_mm()
-    assert abs(g.rendered_monthly_mm(t / MONTH_DEPTH_MAX).sum() - t.sum()) < 1e-6
+    rendered = g.rendered_monthly_mm(t / MONTH_DEPTH_MAX)
+    dropped = sum(undeliverable_mm(t[y], c) for y, c in enumerate(MEASURED_ROTATION))
+    assert rendered.sum() + dropped == pytest.approx(t.sum(), abs=1e-6)
+    for y, c in enumerate(MEASURED_ROTATION):
+        live = irrigable_months(c)
+        assert rendered[y, list(live)] == pytest.approx(t[y, list(live)], abs=1e-6)
+    # The one post-harvest month in the log: barley September 2019 (harvest 8/15).
+    assert dropped == pytest.approx(t[6, 5]) and MEASURED_ROTATION[6] == "barl"
 
 
 def test_fit_loss_penalises_only_beyond_the_gate():

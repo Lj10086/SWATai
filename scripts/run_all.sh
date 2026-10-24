@@ -12,14 +12,18 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 NO3_PRICE="${NO3_PRICE:-0.0}"
-WORKERS="${WORKERS:-4}"
+# All cores: the engine is CPU-bound and scales to ~5x at 10 workers on an M5.
+WORKERS="${WORKERS:-$(getconf _NPROCESSORS_ONLN)}"
+# Budgets are engine runs, except CEIL_PW (CMA-ES evals per oracle and for the shared fit)
+# and GROWER_EVALS (a behaviour fit, not a profit search). The controller gets the same
+# engine runs as CMA-ES and each PPO seed (rule 2).
 if [ "${SMOKE:-0}" = "1" ]; then
     OUT_TAG="${OUT_TAG:-smoke}"; BUDGET=200; PPO_SEEDS=1
-    CEIL_BUDGET=100; CEIL_PW=12; CTRL_BUDGET=100; GROWER_EVALS=8
+    CEIL_PW=12; CTRL_BUDGET=2000; GROWER_EVALS=8
 else
     BUDGET="${BUDGET:-300000}"; PPO_SEEDS="${PPO_SEEDS:-3}"
-    CEIL_BUDGET="${CEIL_BUDGET:-5000}"; CEIL_PW="${CEIL_PW:-2000}"
-    CTRL_BUDGET="${CTRL_BUDGET:-2200}"; GROWER_EVALS="${GROWER_EVALS:-220}"
+    CEIL_PW="${CEIL_PW:-2000}"
+    CTRL_BUDGET="${CTRL_BUDGET:-$BUDGET}"; GROWER_EVALS="${GROWER_EVALS:-220}"
 fi
 suffix="${OUT_TAG:+_$OUT_TAG}"
 LOG="runs/run_all${suffix}.log"
@@ -33,9 +37,10 @@ uv run pytest -q >> "$LOG" 2>&1 || { log "TESTS FAILED"; exit 1; }
 # The gate is lambda_n-independent: one file serves every frontier point (smoke gets its own).
 CEIL="runs/exp1_ceiling.json"
 [ "${SMOKE:-0}" = "1" ] && CEIL="runs/exp1_ceiling_smoke.json"
-[ -f "$CEIL" ] || run swat_gym.experiments.exp1_ceiling --budget "$CEIL_BUDGET" \
+# Reused when its config (budget, prices, model, rendering) matches; recomputed otherwise.
+run swat_gym.experiments.exp1_ceiling \
     --per-window-budget "$CEIL_PW" --workers "$WORKERS" --out "$CEIL"
-gate=$(uv run python -c "import json;print(json.load(open('$CEIL'))['gate_pass'])")
+gate=$(uv run python -c "import json;print(json.load(open('$CEIL'))['result']['gate_pass'])")
 if [ "$gate" != "True" ] && [ "${FORCE_PPO:-0}" != "1" ] && [ "${SMOKE:-0}" != "1" ]; then
     log "FORESIGHT GATE FAILED -- stopping before PPO (FORCE_PPO=1 overrides)"; exit 2
 fi

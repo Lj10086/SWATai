@@ -1,0 +1,33 @@
+{
+  "name": "sgbt",
+  "plant": "sgbt",
+  "perennial": false,
+  "emerge": [
+    5,
+    1
+  ],
+  "harvests": [
+    [
+      10,
+      5
+    ]
+  ],
+  "irrigation_windows_doy": [
+    [
+      110,
+      268
+    ]
+  ],
+  "auto_irrigation": "irr_win_sgbt",
+  "auto_fert_n": "auto_fert_n",
+  "auto_irr_mm": 9.0,
+  "source": {
+    "built_by": "Ai-SWAT-Plus et_calibrate.CropFit._build + monoculture.apply_et_fit",
+    "aiswat_dir": "/Users/ericdu/Desktop/projects/Ai-SWAT-Plus/calibration",
+    "irr_sw_frac": 0.95,
+    "copied": "2026-10-23",
+    "inputs_sha256": "5b396fad9202fdee",
+    "weather": "gridMET at the field point (scripts/port_gridmet.py); the Ai-SWAT-Plus ET fit was made on AgriMet TWFI and is not refitted"
+  },
+  "batchable": true
+}

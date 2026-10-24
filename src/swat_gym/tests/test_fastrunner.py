@@ -171,3 +171,94 @@ def test_missing_required_input_fails_loudly(tmp_path):
     with pytest.raises(FileNotFoundError, match="plants.plt"):
         input_files(src)
     assert "plants.plt" in REQUIRED
+
+
+def test_identical_edits_reuse_the_previous_run(runner):
+    """A repeat of the last run's edits skips the engine and leaves its outputs in place."""
+    runner.run()
+    first = runner.read("hru_wb_yr.txt")
+    runs, skipped = runner.n_runs, runner.n_skipped
+    runner.run({})
+    assert (runner.n_runs, runner.n_skipped) == (runs, skipped + 1)
+    assert runner.read("hru_wb_yr.txt").equals(first)
+
+
+def test_a_rewritten_output_forces_a_real_run(runner):
+    """Reuse is refused once anything in the work dir changed, even in place."""
+    runner.run()
+    marker = runner.workdir / "basin_crop_yld_yr.txt"
+    marker.write_text("POISONED\n")
+    runs = runner.n_runs
+    runner.run()
+    assert runner.n_runs == runs + 1 and "POISONED" not in marker.read_text()
+
+
+def test_engine_failure_reports_the_log_tail(tmp_path):
+    """A crashing engine raises with its console output, and the failed run is not reused."""
+    from swat_gym.engine import EngineError
+
+    stub = tmp_path / "engine.sh"
+    stub.write_text("#!/bin/sh\necho 'reading from time.sim'\necho boom >&2\nexit 3\n")
+    stub.chmod(0o755)
+    with FastRunner(workdir=tmp_path / "w") as r:
+        r.engine = stub
+        with pytest.raises(EngineError, match="(?s)exited 3.*time.sim.*boom"):
+            r.run()
+        with pytest.raises(EngineError):  # retried, not answered from the failed run
+            r.run()
+        assert (r.n_runs, r.n_skipped) == (2, 0)
+
+
+def test_missing_output_table_raises_rather_than_reading_stale(runner):
+    """The engine can exit 0 without writing tables (e.g. an unreadable time.sim)."""
+    from swat_gym.engine import EngineError
+
+    runner.run()
+    (runner.workdir / "hru_wb_yr.txt").unlink()
+    with pytest.raises(EngineError, match="not produced"):
+        runner.read("hru_wb_yr.txt")
+
+
+def test_manifest_raises_on_a_declared_but_missing_input(tmp_path):
+    import shutil
+
+    src = tmp_path / "TxtInOut"
+    shutil.copytree(TXTINOUT, src)
+    (src / "tfccslr.slr").unlink()  # named in slr.cli and weather-sta.cli
+    with pytest.raises(FileNotFoundError, match="tfccslr.slr"):
+        input_files(src)
+
+
+def test_model_hash_sees_every_input_and_the_engine(tmp_path):
+    """Stage reuse keys on this; lum.dtl and the engine were invisible to the old hash."""
+    import shutil
+
+    from swat_gym.fastrunner import model_hash
+
+    src = tmp_path / "TxtInOut"
+    shutil.copytree(TXTINOUT, src)
+    base = model_hash(src)
+    assert base == model_hash(TXTINOUT)
+    (src / "lum.dtl").write_text((src / "lum.dtl").read_text() + "\n")
+    assert model_hash(src) != base
+    shutil.copy2(TXTINOUT / "lum.dtl", src / "lum.dtl")
+    assert model_hash(src) == base
+    eng = next(p for p in src.iterdir() if p.name == "swatplus_rev62.0.0")
+    eng.write_bytes(eng.read_bytes() + b"\0")
+    assert model_hash(src) != base
+
+
+def test_a_hung_engine_is_killed_at_the_timeout(tmp_path):
+    import time
+
+    from swat_gym.engine import EngineError
+
+    stub = tmp_path / "hang.sh"
+    stub.write_text("#!/bin/sh\nexec sleep 30\n")
+    stub.chmod(0o755)
+    with FastRunner(workdir=tmp_path / "w") as r:
+        r.engine = stub
+        t0 = time.perf_counter()
+        with pytest.raises(EngineError, match="timed out"):
+            r.run(timeout=0.5)
+        assert time.perf_counter() - t0 < 5

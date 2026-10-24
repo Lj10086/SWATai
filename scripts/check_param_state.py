@@ -21,7 +21,7 @@ from swat_gym.params import get_value  # noqa: E402
 
 from port_crops import COLMAP, CROP_MAP, OVERRIDES  # noqa: E402
 
-TIO = ROOT / "model" / "TxtInOut"
+TIO = ROOT / "model" / "rotation" / "TxtInOut"
 CROP_CSV = ROOT / "data" / "crop_params_swat.csv"
 HARVEST = {"CSIL": "gn_corn", "BARL": "gn_barl", "ALFA": "gn_alfa"}
 TOL = 1e-4

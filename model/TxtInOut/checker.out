@@ -1,1 +1,4 @@
- a10_single_hru            SWAT+ 2026-06-18        MODULAR Rev 2026.62.0.0                                
+ a10_single_hru            SWAT+ 2026-06-16        MODULAR Rev 2026.62                                    
+                                        zmx       usle_k       sumfc       sumul      usle_p     usle_ls        esco        epco     cn3_swf       perco     latq_co   tiledrain 
+ sname           hydgrp                 (mm)                    (mm)        (mm)                                                                                     0=notile;1=tile;
+80295           C                  1520.0000      0.0000    279.2000    647.1281      0.7500      0.2733      0.9500      0.5000      0.9500      0.5000      0.0100           0

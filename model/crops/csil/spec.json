@@ -1,0 +1,33 @@
+{
+  "name": "csil",
+  "plant": "corn",
+  "perennial": false,
+  "emerge": [
+    6,
+    1
+  ],
+  "harvests": [
+    [
+      9,
+      25
+    ]
+  ],
+  "irrigation_windows_doy": [
+    [
+      145,
+      261
+    ]
+  ],
+  "auto_irrigation": "irr_win_corn",
+  "auto_fert_n": "auto_fert_n",
+  "auto_irr_mm": 9.0,
+  "source": {
+    "built_by": "Ai-SWAT-Plus et_calibrate.CropFit._build + monoculture.apply_et_fit",
+    "aiswat_dir": "/Users/ericdu/Desktop/projects/Ai-SWAT-Plus/calibration",
+    "irr_sw_frac": 0.95,
+    "copied": "2026-10-23",
+    "inputs_sha256": "2a30904e36b2e515",
+    "weather": "gridMET at the field point (scripts/port_gridmet.py); the Ai-SWAT-Plus ET fit was made on AgriMet TWFI and is not refitted"
+  },
+  "batchable": true
+}

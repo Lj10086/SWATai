@@ -36,6 +36,29 @@ MONTH_N_MAX = 150.0         # kg N/ha per month (lever N range)
 MANURE_MAX = 90.0           # Mg/ha per year (lever N range)
 
 ANNUAL_YEARS = tuple(y for y, c in enumerate(MEASURED_ROTATION) if c != "alfa")
+#: Bump when the lever -> schedule mapping changes meaning; part of every stage config.
+#: 2: no irrigation carry-back between months; no N after harvest (2026-10-23).
+#: 3: nitrogen dead zone (N_DEAD_ZONE) (2026-10-24).
+RENDER_VERSION = 3
+
+#: Nitrogen lever values at or below this share of the range apply nothing; above it the
+#: range is rescaled so the maximum is unchanged. An application pass costs the same at any
+#: rate, so without a dead zone an optimizer whose samples never land exactly on 0 (CMA-ES
+#: returns 1e-6, not 0) pays a full pass for sub-gram applications; residual-action PPO, which
+#: clips to exactly 0, did not. Same mapping on every code path. Irrigation has no pass cost.
+N_DEAD_ZONE = 0.05
+
+
+def n_amount(x, max_amount: float):
+    """Unit-box N lever value(s) -> applied amount, with the dead zone."""
+    x = np.clip(np.asarray(x, dtype=float), 0.0, 1.0)
+    return np.where(x <= N_DEAD_ZONE, 0.0, (x - N_DEAD_ZONE) / (1.0 - N_DEAD_ZONE) * max_amount)
+
+
+def n_unit(amount, max_amount: float):
+    """Inverse of n_amount: applied amount(s) -> unit-box value (0 for none)."""
+    a = np.clip(np.asarray(amount, dtype=float) / max_amount, 0.0, 1.0)
+    return np.where(a <= 0.0, 0.0, N_DEAD_ZONE + (1.0 - N_DEAD_ZONE) * a)
 DIMS = {"I": N_YEARS * N_GROWING, "N": len(ANNUAL_YEARS) * (N_GROWING + 1)}
 
 
@@ -63,7 +86,7 @@ def _days_in_month(mon: int) -> int:
 
 
 def _spread(volume: float, first: int, last: int, max_event: float):
-    """Equal passes on distinct days in [first, last]; returns (passes, leftover volume)."""
+    """Equal passes on distinct days in [first, last]; returns (passes, undeliverable volume)."""
     usable = last - first + 1
     if volume <= 0 or usable <= 0:
         return [], max(0.0, volume)
@@ -76,31 +99,40 @@ def _spread(volume: float, first: int, last: int, max_event: float):
     return [(first + int(k * usable / n), per) for k in range(n)], overflow
 
 
+def _month_days(mon: int, crop: str) -> tuple[int, int]:
+    """[first, last] irrigable day of ``mon`` for ``crop`` (last < first: none, harvested)."""
+    first = _doy(mon, 1)
+    return first, min(first + _days_in_month(mon) - 1, _season_end(crop) - 1)
+
+
+def irrigable_months(crop: str) -> tuple[int, ...]:
+    """Indices into GROWING_MONTHS with at least one day before the season ends."""
+    return tuple(mi for mi, mon in enumerate(GROWING_MONTHS)
+                 if _month_days(mon, crop)[1] >= _month_days(mon, crop)[0])
+
+
+def fertilisable_months(crop: str) -> tuple[int, ...]:
+    """Indices into GROWING_MONTHS whose mid-month N date falls before the season ends."""
+    return tuple(mi for mi, mon in enumerate(GROWING_MONTHS) if _doy(mon, 15) < _season_end(crop))
+
+
 def year_events(month_mm_year, crop: str, max_event: float = MAX_EVENT_MM):
     """Six monthly volumes -> ((doy, mm), ...) passes <= max_event, before harvest.
 
-    Deterministic and state-independent. Overflow is carried back to earlier days.
+    Deterministic and state-independent. Each month's water stays in that month: volume
+    above max_event x its usable days (or in a month after harvest) is dropped, never moved,
+    so deciding a later month cannot change an earlier one (see undeliverable_mm).
     """
-    end = _season_end(crop)
-    season_start = _doy(GROWING_MONTHS[0], 1)
-    acc: dict[int, float] = {}
-    carry = 0.0
+    events = []
     for mi, mon in enumerate(GROWING_MONTHS):
-        first = _doy(mon, 1)
-        last = min(first + _days_in_month(mon) - 1, end - 1)
-        events, over = _spread(float(month_mm_year[mi]), first, last, max_event)
-        for doy, mm in events:
-            acc[doy] = acc.get(doy, 0.0) + mm
-        carry += over
-    doy = end - 1
-    while carry > 1e-9 and doy >= season_start:
-        room = max_event - acc.get(doy, 0.0)
-        if room > 1e-9:
-            take = min(room, carry)
-            acc[doy] = acc.get(doy, 0.0) + take
-            carry -= take
-        doy -= 1
-    return tuple(sorted((d, v) for d, v in acc.items() if v > 0))
+        events += _spread(float(month_mm_year[mi]), *_month_days(mon, crop), max_event)[0]
+    return tuple(sorted(events))
+
+
+def undeliverable_mm(month_mm_year, crop: str, max_event: float = MAX_EVENT_MM) -> float:
+    """Requested mm that year_events drops (it never reaches the field or the bill)."""
+    return float(sum(_spread(float(month_mm_year[mi]), *_month_days(mon, crop), max_event)[1]
+                     for mi, mon in enumerate(GROWING_MONTHS)))
 
 
 def default_monthly_irr() -> np.ndarray:
@@ -125,7 +157,7 @@ def default_x(lever: str) -> np.ndarray:
         return np.clip(default_monthly_irr() / MONTH_DEPTH_MAX, 0.0, 1.0).ravel()
     x = np.zeros((len(ANNUAL_YEARS), N_GROWING + 1))
     for i, y in enumerate(ANNUAL_YEARS):
-        x[i, -1] = MEASURED_MANURE[y][0] / MANURE_MAX
+        x[i, -1] = n_unit(MEASURED_MANURE[y][0], MANURE_MAX)
     return x.ravel()
 
 
@@ -142,10 +174,11 @@ def plan_from(lever: str, x: Sequence[float]) -> list[YearAction]:
     if lever == "N":
         xn = x.reshape(len(ANNUAL_YEARS), N_GROWING + 1)
         for i, y in enumerate(ANNUAL_YEARS):
-            splits = tuple((_doy(mon, 15), float(xn[i, m] * MONTH_N_MAX))
-                           for m, mon in enumerate(GROWING_MONTHS))
+            live = fertilisable_months(plan[y].crop)
+            splits = tuple((_doy(mon, 15), float(n_amount(xn[i, m], MONTH_N_MAX)))
+                           for m, mon in enumerate(GROWING_MONTHS) if m in live)
             plan[y] = replace(plan[y], fert_splits=splits,
-                              manure_mg=float(xn[i, -1] * MANURE_MAX))
+                              manure_mg=float(n_amount(xn[i, -1], MANURE_MAX)))
     return plan
 
 
@@ -157,4 +190,14 @@ def evaluate(lever: str, x: Sequence[float], runner, *, prices: Prices | None = 
     runner.run(edits)
     out = profit(runner, prices or nass(2024), no3_price=no3_price)
     out["start_year"] = start_year
+    out["irr_dropped_mm"] = irr_dropped_mm(lever, x)
     return out
+
+
+def irr_dropped_mm(lever: str, x: Sequence[float]) -> float:
+    """Requested irrigation the renderer could not place (0 for lever N's measured water)."""
+    if lever != "I":
+        return 0.0
+    month_mm = np.clip(np.asarray(x, dtype=float), 0.0, 1.0).reshape(N_YEARS, N_GROWING)
+    return float(sum(undeliverable_mm(month_mm[y] * MONTH_DEPTH_MAX, c)
+                     for y, c in enumerate(MEASURED_ROTATION)))

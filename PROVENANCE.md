@@ -204,6 +204,40 @@ gauge discrepancy to decide.
 
 ---
 
+## 2b. Weather: gridMET at the field point (2026-10-24)
+
+Every model (rotation and `model/crops/*`) now runs on **gridMET** (Abatzoglou 2013,
+*Int. J. Climatol.* 33:121–131, doi:10.1002/joc.3413) at the field point 42.540 N,
+114.320 W, 1995–2025: precipitation, max/min temperature, shortwave radiation, max/min RH and
+10 m wind from the Northwest Knowledge Network THREDDS NCSS point service
+(`thredds.northwestknowledge.net:8080/thredds/ncss/agg_met_<var>_1979_CurrentYear_CONUS.nc`),
+unpacked with each variable's published `scale_factor`/`add_offset` (`tmmx` 220 K, `tmmn` 210 K;
+recorded in `data/gridmet_kimberly_1995_2025.json`). `scripts/port_gridmet.py` converts with
+FAO-56 (Allen et al. 1998, FAO Irrigation and Drainage Paper 56): RH from eq. 17 in the
+convention `port_agrimet.py` used; wind 10 m → 2 m by eq. 47 (× 0.748); radiation × 0.0864.
+AgriMet TWFI stays the **ET target** (`data/observed_et_agrimet.csv`) and the source of the
+weather-file wiring.
+
+gridMET vs the station, 1995–2025: precipitation +3.9 % (daily r 0.78), Tmax −2.0 %
+(r 0.99), Tmin −8.2 %, solar +1.8 %, RH −7.4 %, wind −8.5 %; no day offset (all peak at lag 0).
+gridMET's own grass ETo is **+27 %** above the station's April–October, the known dry bias of
+gridded reanalysis over irrigated land, so it is reported (`data/observed_et_gridmet.csv`) but
+not used as a target. SWAT+'s Penman–Monteith on gridMET inputs lands on the station ETos at
+`pet_co` **0.958** (was 0.964 on AgriMet): gridMET's lower humidity and lower wind cancel.
+
+Effects (rotation, measured years): yield PBIAS alfalfa +49.2 → **+55.2 %**, corn −12.1 →
+**−9.2 %**, barley +2.4 → **+4.1 %**; PET vs ETos 0.0 → −0.0 %; ET vs reference +11.1 → +11.2 %;
+leaching still zero at measured practice and threshold-behaved above ~×1.2 water. The N-cycle
+refit (`calibrate/optimize.py --maxiter 80`) improved the score 2303.5 → 2271.1 (1.4 %) by
+pinning `fr_hum_act` at its lower bound and moving the screen-inert `n_perc` 0.2 → 0.85; that
+is a fit to noise, so it was **not applied** (the 2026-09-10 N-cycle values stand). Crop models:
+their PET sits +27 % above ETos on either weather (the Ai-SWAT-Plus fit targets crop ET, not
+grass reference); gridMET moves it +1 pp, yields −1.5 to −7.6 %, irrigation ±2 %. Their ET fit
+is Ai-SWAT-Plus's and is not refitted here.
+
+The engines were checked on every window: no crashes (Ai-SWAT-Plus saw a frozen-soil SIGFPE
+on gridMET with another build; not reproduced with these engines and `cn` runoff).
+
 ## 3. RuFaS files deliberately *not* used
 
 The RuFaS scenario carries a full input set; most of it was superseded by REF on 2026-07-27 and

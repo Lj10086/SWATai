@@ -1,1 +1,3 @@
- a10_single_hru            SWAT+ 2026-06-18        MODULAR Rev 2026.62.0.0                                
+ a10_single_hru            SWAT+ 2026-06-16        MODULAR Rev 2026.62                                    
+    hrueventssedyldprecippeak_ratek_factor      slope          length   ls_factor    p_factor    c_factor       rsd_m  grcov_frac  rsd_covfact bio_covfact
+               t/ha    mm    m3/s                m/m               m                                           kg/ha        frac                         

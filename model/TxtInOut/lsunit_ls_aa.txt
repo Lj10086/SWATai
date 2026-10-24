@@ -1,1 +1,4 @@
- a10_single_hru            SWAT+ 2026-06-18        MODULAR Rev 2026.62.0.0                                
+ a10_single_hru            SWAT+ 2026-06-16        MODULAR Rev 2026.62                                    
+   jday   mon   day    yr   unit  gis_id  name                      sedyld          sedorgn          sedorgp          surqno3          lat3no3         surqsolp             usle          sedminp          tileno3          lchlabp         tilelabp           satexn    plant_cov       mgt_ops                          percn
+                                                                       tha             kgha             kgha             kgha             kgha             kgha             tons             kgha             kgha             kgha             kgha             kgha                                                      kgha
+    365    12    31  2025      1      10  rtu10                  0.121       0.584       0.069       0.034       0.000       0.001       0.052       0.029       0.000       0.000       0.000       0.000

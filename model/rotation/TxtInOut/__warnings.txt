@@ -1,0 +1,4 @@
+Skipping hmd import. File does not exist: D:\UI Computer 5D9Y7X2\Documents\SWAT+\Projects\a10_single_hru\Climate\2005_2025\rh.txt
+Skipping slr import. File does not exist: D:\UI Computer 5D9Y7X2\Documents\SWAT+\Projects\a10_single_hru\Climate\2005_2025\solar.txt
+Skipping wnd import. File does not exist: D:\UI Computer 5D9Y7X2\Documents\SWAT+\Projects\a10_single_hru\Climate\2005_2025\wind.txt
+Skipping pet import. File does not exist: D:\UI Computer 5D9Y7X2\Documents\SWAT+\Projects\a10_single_hru\Climate\2005_2025\pet.txt

@@ -4,6 +4,7 @@ from __future__ import annotations
 import os
 import platform
 import subprocess
+import threading
 from pathlib import Path
 
 _MAGIC = {
@@ -80,22 +81,40 @@ def find_engine(txtinout: Path) -> Path:
     return candidates[0]
 
 
+#: The engine's console output (one progress line per simulated day) goes here, not a pipe:
+#: a file is ~10 % faster per run. Not an input, so FastRunner deletes it before each run.
+ENGINE_LOG = "swat_gym_engine.log"
+
+
 def run_engine(exe: Path, run_dir: Path, timeout: float = 600.0) -> str:
-    """Run ``exe`` with ``run_dir`` as the working directory; return its stdout."""
-    try:
-        proc = subprocess.run(
-            [str(exe)],
-            cwd=run_dir,
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-        )
-    except subprocess.TimeoutExpired as e:
-        raise EngineError(f"SWAT+ timed out after {timeout}s in {run_dir}") from e
+    """Run ``exe`` with ``run_dir`` as the working directory; return its console output."""
+    log = Path(run_dir) / ENGINE_LOG
+    with open(log, "wb") as f:
+        proc = subprocess.Popen([str(exe)], cwd=run_dir, stdout=f, stderr=subprocess.STDOUT)
+        # A blocking wait plus a kill timer: wait(timeout=...) polls with sleeps of up to
+        # 50 ms, which cost ~30 ms per ~40 ms run.
+        timed_out = threading.Event()
+
+        def kill() -> None:
+            timed_out.set()
+            proc.kill()
+
+        timer = threading.Timer(timeout, kill)
+        timer.start()
+        try:
+            proc.wait()
+        except BaseException:  # e.g. Ctrl-C: don't leave the engine running
+            proc.kill()
+            proc.wait()
+            raise
+        finally:
+            timer.cancel()
+    if timed_out.is_set():
+        raise EngineError(f"SWAT+ timed out after {timeout}s in {run_dir}")
+    out = log.read_text(errors="replace")
     if proc.returncode != 0:
         raise EngineError(
             f"SWAT+ exited {proc.returncode} in {run_dir}\n"
-            f"--- stdout tail ---\n{proc.stdout[-2000:]}\n"
-            f"--- stderr tail ---\n{proc.stderr[-2000:]}"
+            f"--- output tail ---\n{out[-3000:]}"
         )
-    return proc.stdout
+    return out
