@@ -54,12 +54,12 @@ Train starts 1995–2004 (10), test starts 2013–2017 (5), zero shared calendar
 
 ```bash
 # inputs (see CLAUDE.md "Code map — LTM" for the order)
-uv run python -m swat_gym.experiments.ltm --lever R --budget 50000 --seeds 4    # Exp 1 rotation
-uv run python -m swat_gym.experiments.ltm --lever N --budget 100000 --seeds 4   # Exp 2 nitrogen
-uv run python -m swat_gym.experiments.ltm --lever I --budget 100000 --seeds 4   # Exp 3, eff 0.80
-uv run python -m swat_gym.experiments.ltm --lever I --budget 100000 --seeds 4 --irr-eff 0.55
-uv run python -m swat_gym.experiments.ltm --lever I --budget 100000 --seeds 4 --irr-eff 0.90
-bash runs/ltm_v3.sh                                                              # all five, in order
+# full budgets, 8 seeds (2026-10-28); the five can run at once (~1 day on an M-series laptop)
+uv run python -m swat_gym.experiments.ltm --lever R --budget 100000 --seeds 8   # Exp 1 rotation
+uv run python -m swat_gym.experiments.ltm --lever N --budget 200000 --seeds 8   # Exp 2 nitrogen
+uv run python -m swat_gym.experiments.ltm --lever I --budget 200000 --seeds 8   # Exp 3, eff 0.80
+uv run python -m swat_gym.experiments.ltm --lever I --budget 200000 --seeds 8 --irr-eff 0.55
+uv run python -m swat_gym.experiments.ltm --lever I --budget 200000 --seeds 8 --irr-eff 0.90
 SMOKE=1 uv run python -m swat_gym.experiments.ltm --lever N                      # ~2 min
 ```
 
