@@ -215,7 +215,7 @@ def make_vec_env(spec: CropSpec, lever: str, *, prices: Prices, n_envs: int, see
     class CropVecEnv(VecEnv):
         def __init__(self) -> None:
             self.render_mode = None
-            self.runner = CropRunner(spec, k=n_envs)
+            self.runner = CropRunner(spec, k=n_envs, parallel=True)
             x0 = default_x(spec, lever)
             self.eps = [_Episode(spec, lever, prices, no3_price, x0) for _ in range(n_envs)]
             self.rng = np.random.default_rng(seed)

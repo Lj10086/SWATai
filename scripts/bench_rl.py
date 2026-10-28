@@ -56,8 +56,8 @@ CAVEATS = [
     "Lever plans replay default_x in the spin-up year; the default row uses the decision "
     "tables there. Decision-table irrigation windows are days of year, lever passes calendar "
     "dates (leap years: one day apart).",
-    "Medium budget (3 seeds, ~20k candidate-seasons per method) is a benchmark, not a "
-    "converged result: sign-inconsistent seeds are reported as unresolvable.",
+    "The budget (config) is a benchmark, not a converged result: sign-inconsistent seeds are "
+    "reported as unresolvable.",
 ]
 
 

@@ -6,13 +6,13 @@ Rows, all on test windows (scored seasons 2016-2025):
   default    the model's own decision tables (the shipped management; quote gains vs this)
   default_x  the tables' train-mean monthly amounts, open loop (CMA-ES and PPO start here)
   fixed      CMA-ES open-loop plan fitted on train
-  policy     PPO, closed loop, per seed
+  policy     PPO, closed loop, per seed: its best curve-point snapshot on train
   frozen     each seed's best train-window plan (selected on train), replayed open loop
 
 Budgets are candidate-seasons (one simulated window of one plan): CMA-ES gets
-budget // n_train evaluations, each PPO seed ``budget`` env steps. With batching several
-candidate-seasons share an engine run, so the unit is no longer engine runs (rule 2,
-restated for crop models).
+budget // n_train evaluations, each PPO seed ``budget`` env steps (the final pick
+included). With batching several candidate-seasons share an engine run, so the unit is no
+longer engine runs (rule 2, restated for crop models).
 """
 from __future__ import annotations
 
@@ -37,7 +37,8 @@ from .common import load_stage, minimise, paired, save_stage
 #: a rollout of 4 episodes per env spans 4 weather years; minibatch = a quarter of it.
 CROP_PPO = {"n_envs": 8, "rollout_episodes": 4, "minibatches": 4, "gamma": 1.0,
             "log_std_init": -2.0, "norm_obs": True, "clip_obs": 10.0,
-            "action": "residual around default_x", "window": "shared per round"}
+            "action": "residual around default_x", "window": "shared per round",
+            "final": "best of the 16 curve-point snapshots on all train windows (budgeted)"}
 KEYS = ("profit", "revenue", "water_cost", "fert_cost", "p_cost", "op_cost", "yield_mg",
         "irrigation_mm", "fert_n_kg", "fert_p_kg", "n_fert_events", "no3_leached_kg",
         "n2o_kg")
@@ -93,9 +94,110 @@ def neg_profits(xs, start_year, name, lever, prices, no3_price) -> list[float]:
 
 # -- PPO --------------------------------------------------------------------------------
 
+#: Learning-curve points per seed (plus one before training); also the number of
+#: snapshots the final pick chooses among (ES's ``curve_points``).
+CURVE_POINTS = 16
+
+
+def pick_cost(spec: CropSpec, lever: str) -> int:
+    """Candidate-seasons of the final pick: every snapshot on every train window."""
+    return CURVE_POINTS * len(CROP_TRAIN_YEARS) * dims(spec, lever)
+
+
+def _curve_callback(spec, lever, prices, no3_price, budget, vn, snap_dir: Path):
+    """Learning curve: deterministic policy on every test window at evenly spaced timesteps,
+    plus the mean profit of the training episodes finished since the last point. The test
+    scores are diagnostic (nothing selects on them; not budgeted). The policy at the first
+    15 points after the start and at the end of training is saved to ``snap_dir`` for the
+    final pick, which is on train."""
+    from stable_baselines3.common.callbacks import BaseCallback
+
+    every = max(1, budget // CURVE_POINTS)
+
+    class Curve(BaseCallback):
+        def __init__(self):
+            super().__init__()
+            self.points, self._train, self._next, self.snaps = [], [], 0, []
+
+        def _snap(self):
+            i = len(self.snaps)
+            self.model.save(str(snap_dir / f"{i}.zip"))
+            vn.save(str(snap_dir / f"{i}.pkl"))
+            self.snaps.append(int(self.num_timesteps))
+
+        def _point(self):
+            act = policy_fn(self.model, vn)
+            with CropEnv(spec, lever, prices=prices, no3_price=no3_price) as env:
+                test = [rollout(env, act, sy)["profit"] for sy in CROP_TEST_YEARS]
+            self.points.append({"timesteps": int(self.num_timesteps),
+                                "test_profit": float(np.mean(test)),
+                                "train_episode_profit": (float(np.mean(self._train))
+                                                         if self._train else None),
+                                "train_episodes": len(self._train)})
+            self._train = []
+            self._next += every
+            if self.num_timesteps > 0 and len(self.snaps) < CURVE_POINTS - 1:
+                self._snap()
+
+        def _on_training_start(self):
+            snap_dir.mkdir(parents=True, exist_ok=True)
+            self._point()
+
+        def _on_step(self):
+            for done, info in zip(self.locals["dones"], self.locals["infos"]):
+                if done:
+                    self._train.append(info["profit"])
+            if self.num_timesteps >= self._next:
+                self._point()
+            return True
+
+        def _on_training_end(self):
+            if self.points[-1]["timesteps"] != self.num_timesteps:
+                self._point()
+            if not self.snaps or self.snaps[-1] != self.num_timesteps:
+                self._snap()
+
+    return Curve()
+
+
+def load_policy(ckpt: Path):
+    """(model, VecNormalize) of a seed's deployed policy: its picked snapshot, or the final
+    policy for checkpoints trained before the pick existed."""
+    from stable_baselines3 import PPO
+
+    stats = json.loads((ckpt / "stats.json").read_text())
+    if "picked" in stats:
+        model, norm = ckpt / "snaps" / f"{stats['picked']}.zip", ckpt / "snaps" / f"{stats['picked']}.pkl"
+    else:
+        model, norm = ckpt / "final.zip", ckpt / "vecnormalize.pkl"
+    return PPO.load(str(model)), pickle.loads(norm.read_bytes())
+
+
+def pick_snapshot(spec: CropSpec, lever: str, prices: Prices, no3_price: float,
+                  snap_dir: Path, n_snaps: int) -> dict:
+    """Every snapshot's deterministic policy on every train window; the best mean is kept."""
+    from stable_baselines3 import PPO
+
+    train, runner = [], CropRunner(spec)
+    try:
+        with CropEnv(spec, lever, prices=prices, no3_price=no3_price, runner=runner) as env:
+            for i in range(n_snaps):
+                act = policy_fn(PPO.load(str(snap_dir / f"{i}.zip")),
+                                pickle.loads((snap_dir / f"{i}.pkl").read_bytes()))
+                train.append(mean([rollout(env, act, sy) for sy in CROP_TRAIN_YEARS]))
+        seasons = int(runner.n_seasons)
+    finally:
+        runner.close()
+    best = int(np.argmax(train))
+    return {"picked": best, "picked_train_profit": train[best], "snap_train_profit": train,
+            "pick_seasons": seasons}
+
+
 def train_ppo(spec: CropSpec, lever: str, prices: Prices, no3_price: float, budget: int,
               seed: int, ckpt: Path):
-    """Train one seed on the batched vec env; returns (model, VecNormalize, stats)."""
+    """Train one seed on the vec env for ``budget`` minus the final pick's cost, then pick
+    the best curve-point snapshot on train (as ES does); returns (model, VecNormalize,
+    stats incl. curve) of the picked policy."""
     import torch
     from stable_baselines3 import PPO
     from stable_baselines3.common.vec_env import VecNormalize
@@ -104,8 +206,7 @@ def train_ppo(spec: CropSpec, lever: str, prices: Prices, no3_price: float, budg
     final, norm = ckpt / "final.zip", ckpt / "vecnormalize.pkl"
     stats_path = ckpt / "stats.json"
     if final.is_file() and norm.is_file() and stats_path.is_file():
-        return (PPO.load(str(final)), pickle.loads(norm.read_bytes()),
-                json.loads(stats_path.read_text()))
+        return (*load_policy(ckpt), json.loads(stats_path.read_text()))
     hp = CROP_PPO
     ep = dims(spec, lever)
     venv = make_vec_env(spec, lever, prices=prices, n_envs=hp["n_envs"], seed=seed,
@@ -117,16 +218,22 @@ def train_ppo(spec: CropSpec, lever: str, prices: Prices, no3_price: float, budg
                 policy_kwargs={"log_std_init": hp["log_std_init"]})
     t0 = time.time()
     try:
-        model.learn(total_timesteps=budget)
+        # SB3 rounds up to whole rollouts; tiny (smoke) budgets get one rollout.
+        train_budget = max(n_steps * hp["n_envs"], budget - pick_cost(spec, lever))
+        curve = _curve_callback(spec, lever, prices, no3_price, train_budget, vn, ckpt / "snaps")
+        model.learn(total_timesteps=train_budget, callback=curve)
         stats = {"timesteps": int(model.num_timesteps), "train_seconds": time.time() - t0,
-                 **venv.runner_stats()}
-        ckpt.mkdir(parents=True, exist_ok=True)
+                 **venv.runner_stats(), "curve": curve.points, "snap_timesteps": curve.snaps}
         model.save(str(final))
         vn.save(str(norm))
-        stats_path.write_text(json.dumps(stats))
-        return model, pickle.loads(norm.read_bytes()), stats
     finally:
         vn.close()
+    t1 = time.time()
+    stats.update(pick_snapshot(spec, lever, prices, no3_price, ckpt / "snaps", len(curve.snaps)),
+                 pick_seconds=time.time() - t1)
+    stats["train_seasons"], stats["seasons"] = stats["seasons"], stats["seasons"] + stats["pick_seasons"]
+    stats_path.write_text(json.dumps(stats))
+    return (*load_policy(ckpt), stats)
 
 
 def policy_fn(model, vecnorm):
@@ -134,6 +241,19 @@ def policy_fn(model, vecnorm):
         a, _ = model.predict(vecnorm.normalize_obs(obs), deterministic=True)
         return env.absolute(a)
     return act
+
+
+def ppo_train_profit(args) -> float:
+    """Pool job: a trained seed's deployed policy's mean profit on every train window (for
+    picking among seeds on train, never on test). Loads the checkpoint; no training."""
+    name, lever, prices, no3, ckpt = args
+    spec, ckpt = load_crop(name), Path(ckpt)
+    stats = json.loads((ckpt / "stats.json").read_text())
+    if "picked_train_profit" in stats:  # the final pick already scored it on every train window
+        return stats["picked_train_profit"]
+    model, vn = load_policy(ckpt)
+    with CropEnv(spec, lever, prices=prices, no3_price=no3) as env:
+        return mean([rollout(env, policy_fn(model, vn), sy) for sy in CROP_TRAIN_YEARS])
 
 
 def ppo_seed(args) -> dict:
@@ -157,8 +277,9 @@ def ppo_seed(args) -> dict:
             "frozen_x": list(cands[best].x), "train": stats,
             "eval_seasons": len(CROP_TEST_YEARS + CROP_TRAIN_YEARS) * dims(spec, lever)
             + len(cands) * len(CROP_TRAIN_YEARS) + len(CROP_TEST_YEARS),
-            "seconds": {"train": stats["train_seconds"], "rollouts": t_eval - t0
-                        - stats["train_seconds"], "frozen": time.time() - t_eval}}
+            "seconds": {"train": stats["train_seconds"], "pick": stats.get("pick_seconds", 0.0),
+                        "rollouts": t_eval - t0 - stats["train_seconds"]
+                        - stats.get("pick_seconds", 0.0), "frozen": time.time() - t_eval}}
 
 
 # -- the case ---------------------------------------------------------------------------

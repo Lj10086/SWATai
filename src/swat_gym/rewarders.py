@@ -21,7 +21,10 @@ M3_PER_MM_HA = 10.0
 
 # IPCC 2019 Tier 1 defaults. Accounting only: SWAT+ does not simulate N2O.
 # EF5 is applied to simulated no3_rchg instead of FracLEACH x applied N.
-# TODO(before submission): verify these values against the IPCC tables.
+# Verified 2026-10-25 against the 2019 Refinement to the 2006 IPCC Guidelines, Vol. 4 Ch. 11
+# (Hergoualc'h et al. 2019), Table 11.1 (updated: aggregated EF1 0.010) and Table 11.3
+# (updated: aggregated EF4 0.010, EF5 0.011, FracGASF 0.11, FracGASM 0.21). Kimberly is a dry
+# climate there (annual P/PET < 1), whose disaggregated (Tier 2 option) EF1 and EF4 are 0.005.
 IPCC_EF1 = 0.010        #: direct N2O-N per kg N applied
 IPCC_EF4 = 0.010        #: N2O-N per kg N volatilised
 IPCC_EF5 = 0.011        #: N2O-N per kg N leached

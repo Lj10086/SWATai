@@ -259,12 +259,15 @@ def time_sim(start_year: int) -> str:
 
 class CropRunner:
     """Runs up to ``k`` plans per call on one window: one k-HRU engine run if the spec is
-    batchable, else one single-HRU run per plan. Not thread/process safe."""
+    batchable, else one single-HRU run per plan (concurrently, one engine copy per plan, if
+    ``parallel``: for PPO's vec env on unbatchable specs). Not thread/process safe."""
 
-    def __init__(self, spec: CropSpec, k: int = 1) -> None:
+    def __init__(self, spec: CropSpec, k: int = 1, parallel: bool = False) -> None:
         self.spec, self.k = spec, int(k)
         self.batched = self.k > 1 and spec.batchable
         self._tmp = None
+        self._extra: list[FastRunner] = []
+        self._pool = None
         if self.batched:
             self._tmp = tempfile.TemporaryDirectory(prefix=f"swat_gym_{spec.name}_k{k}_")
             src = Path(self._tmp.name) / "TxtInOut"
@@ -274,16 +277,21 @@ class CropRunner:
         self.runner = FastRunner(src, keep=CROP_OUTPUTS, editable=EDITABLE)
         self._irr_base = (src / "irr.ops").read_text().rstrip("\n") + "\n"
         self._sch_head = "\n".join(_rows(src / "management.sch")[:2]) + "\n"
+        if parallel and not self.batched and self.k > 1:
+            from concurrent.futures import ThreadPoolExecutor
+            self._extra = [FastRunner(src, keep=CROP_OUTPUTS, editable=EDITABLE)
+                           for _ in range(self.k - 1)]
+            self._pool = ThreadPoolExecutor(self.k)
         #: Candidate-seasons simulated: the unit CMA-ES and PPO budgets are matched in.
         self.n_seasons = 0
 
     @property
     def n_runs(self) -> int:
-        return self.runner.n_runs
+        return sum(r.n_runs for r in [self.runner, *self._extra])
 
     @property
     def n_skipped(self) -> int:
-        return self.runner.n_skipped
+        return sum(r.n_skipped for r in [self.runner, *self._extra])
 
     def _edits(self, plans: Sequence[Plan], start_year: int, names: Sequence[str]):
         blocks, irr, rendered = [], [], []
@@ -314,15 +322,22 @@ class CropRunner:
             self.runner.run(edits)
             by_unit = {t: dict(tuple(self.runner.read(t).groupby("unit"))) for t in TABLES}
             return [_per_hru(by_unit, i + 1, sched[i]) for i in range(len(plans))]
-        out = []
-        for plan in plans:
+        def one(runner: FastRunner, plan: Plan) -> dict[str, pd.DataFrame]:
             edits, sched = self._edits([plan], start_year, [self.spec.schedule])
-            self.runner.run(edits)
-            by_unit = {t: dict(tuple(self.runner.read(t).groupby("unit"))) for t in TABLES}
-            out.append(_per_hru(by_unit, 1, sched[0]))
-        return out
+            runner.run(edits)
+            by_unit = {t: dict(tuple(runner.read(t).groupby("unit"))) for t in TABLES}
+            return _per_hru(by_unit, 1, sched[0])
+
+        if self._pool is not None and len(plans) > 1:
+            runners = [self.runner, *self._extra][:len(plans)]
+            return list(self._pool.map(one, runners, plans))
+        return [one(self.runner, plan) for plan in plans]
 
     def close(self) -> None:
+        if self._pool is not None:
+            self._pool.shutdown()
+        for r in self._extra:
+            r.close()
         self.runner.close()
         if self._tmp is not None:
             self._tmp.cleanup()
