@@ -1,0 +1,18 @@
+calibration.cal: heat units to maturity per crop (Ai-SWAT-Plus fits), all HRUs
+8
+NAME CHG_TYP VAL CONDS LYR1 LYR2 YEAR1 YEAR2 DAY1 DAY2 OBJ_TOT
+phu_mat absval 1664.6 1 0 0 0 0 0 0 3 1 2 3
+phu_plant = 0 barl
+phu_mat absval 2449.4 1 0 0 0 0 0 0 3 1 2 3
+phu_plant = 0 sgbt
+phu_mat absval 1810.3 1 0 0 0 0 0 0 3 1 2 3
+phu_plant = 0 wwht
+phu_mat absval 1915.2 1 0 0 0 0 0 0 3 1 2 3
+phu_plant = 0 pota
+phu_mat absval 999.8 1 0 0 0 0 0 0 3 1 2 3
+phu_plant = 0 ptbn
+phu_mat absval 2983.7 1 0 0 0 0 0 0 3 1 2 3
+phu_plant = 0 alfa
+phu_mat absval 1792.1 1 0 0 0 0 0 0 3 1 2 3
+phu_plant = 0 corn
+n_act_frac absval 0.21556 0 0 0 0 0 0 0 0

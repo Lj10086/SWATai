@@ -1,0 +1,62 @@
+{
+  "code": "ALFA",
+  "plant": "alfa",
+  "role": "exp1",
+  "plants_plt_row": "alfa  perennial  temp_gro  0.50000  0  12.75905  1.00000  5.05207  0.01000  0.01000  0.50628  0.95000  0.90143  0.52993  0.90000  3.00000  19.95620  2.05296  0.02500  0.00350  0.08527  0.05930  0.04090  0.00641  0.00513  0.00366  0.90000  0.01000  0.01000  4.00000  0.75000  10.00000  660.00000  35.00000  0.01000  1.92374  0.30000  2  30.00000  0.65000  12.00000  3.00000  0.10000  0.40000  0.20000  0.00000  0.00000  0.00000  0.00000  0.50000  0.20000  0.50000  0.07000  0.1214  0.0900  0.2000  alfalfa  ",
+  "plants_plt_header": "name  plnt_typ  gro_trig  nfix_co  days_mat  bm_e  harv_idx  lai_pot  frac_hu1  lai_max1  frac_hu2  lai_max2  hu_lai_decl  dlai_rate  can_ht_max  rt_dp_max  tmp_opt  tmp_base  frac_n_yld  frac_p_yld  frac_n_em  frac_n_50  frac_n_mat  frac_p_em  frac_p_50  frac_p_mat  harv_idx_ws  usle_c_min  stcon_max  vpd  frac_stcon  ru_vpd  co2_hi  bm_e_hi  plnt_decomp  lai_min  bm_tree_acc  yrs_mat  bm_tree_max  ext_co  leaf_tov_mn  leaf_tov_mx  bm_dieoff  rt_st_beg  rt_st_end  plnt_pop1  frac_lai1  plnt_pop2  frac_lai2  frac_sw_gro  aeration  rsd_pctcov  rsd_covfac  avg_lig_frac  ab_lig_frac  bg_lig_frac  description",
+  "phu_mat": 2983.7,
+  "harv_op": "gn_alfa",
+  "harv_ops_row": "gn_alfa                        biomass       0.95000       1.00000       0.00000  workbook_ALFA_HARV_EFF",
+  "spec": {
+    "perennial": true,
+    "emerge": [
+      3,
+      1
+    ],
+    "harvests": [
+      [
+        6,
+        15
+      ],
+      [
+        7,
+        30
+      ],
+      [
+        8,
+        30
+      ],
+      [
+        10,
+        15
+      ]
+    ],
+    "irrigation_windows_doy": [
+      [
+        105,
+        159
+      ],
+      [
+        167,
+        204
+      ],
+      [
+        212,
+        235
+      ],
+      [
+        243,
+        281
+      ]
+    ],
+    "auto_irr_mm": 9.0
+  },
+  "source": {
+    "built_by": "Ai-SWAT-Plus et_calibrate.CropFit._build + monoculture.apply_et_fit",
+    "aiswat_dir": "/Users/ericdu/Desktop/projects/Ai-SWAT-Plus/calibration",
+    "irr_sw_frac": 0.95,
+    "weather": "gridMET at the field point (scripts/port_gridmet.py); the Ai-SWAT-Plus ET fit was made on AgriMet TWFI and is not refitted",
+    "copied": "2026-10-25",
+    "inputs_sha256": "96f8b4d050f1649b"
+  }
+}

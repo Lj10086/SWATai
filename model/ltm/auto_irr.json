@@ -1,0 +1,59 @@
+{
+  "sw_frac": 0.7523,
+  "pass_mm": 25.4,
+  "efficiency": 1.0,
+  "gross": true,
+  "target_mm_2013_2020": 4542.027999999998,
+  "auto_mm": 4546.6,
+  "per_year": {
+    "2013": {
+      "measured": 384.81,
+      "auto": 533.4,
+      "auto_events": 21,
+      "measured_events": 9
+    },
+    "2014": {
+      "measured": 538.48,
+      "auto": 685.8,
+      "auto_events": 27,
+      "measured_events": 18
+    },
+    "2015": {
+      "measured": 418.846,
+      "auto": 533.4,
+      "auto_events": 21,
+      "measured_events": 10
+    },
+    "2016": {
+      "measured": 775.97,
+      "auto": 711.2,
+      "auto_events": 28,
+      "measured_events": 22
+    },
+    "2017": {
+      "measured": 574.294,
+      "auto": 304.8,
+      "auto_events": 12,
+      "measured_events": 9
+    },
+    "2018": {
+      "measured": 787.9079999999998,
+      "auto": 762.0,
+      "auto_events": 30,
+      "measured_events": 19
+    },
+    "2019": {
+      "measured": 289.56,
+      "auto": 254.0,
+      "auto_events": 10,
+      "measured_events": 5
+    },
+    "2020": {
+      "measured": 772.1599999999994,
+      "auto": 762.0,
+      "auto_events": 30,
+      "measured_events": 19
+    }
+  },
+  "fitted": "2026-10-27"
+}

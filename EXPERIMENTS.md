@@ -50,6 +50,42 @@ PPO acts in residuals around `default_x` (measured practice), so it starts where
 
 Train starts 1995–2004 (10), test starts 2013–2017 (5), zero shared calendar years, ESS 1.25.
 
+## LTM experiments (`src/swat_gym/experiments/ltm.py`) — the paper's environment
+
+```bash
+# inputs (see CLAUDE.md "Code map — LTM" for the order)
+uv run python -m swat_gym.experiments.ltm --lever R --budget 50000 --seeds 4    # Exp 1 rotation
+uv run python -m swat_gym.experiments.ltm --lever N --budget 100000 --seeds 4   # Exp 2 nitrogen
+uv run python -m swat_gym.experiments.ltm --lever I --budget 100000 --seeds 4   # Exp 3, eff 0.80
+uv run python -m swat_gym.experiments.ltm --lever I --budget 100000 --seeds 4 --irr-eff 0.55
+uv run python -m swat_gym.experiments.ltm --lever I --budget 100000 --seeds 4 --irr-eff 0.90
+bash runs/ltm_v3.sh                                                              # all five, in order
+SMOKE=1 uv run python -m swat_gym.experiments.ltm --lever N                      # ~2 min
+```
+
+Budget = HRU-episode runs (`LtmRunner.n_hru_runs`); ES (closed loop: one run per decision)
+and CMA-ES (open loop: one run per candidate-window) get the same. Per strategy
+(`profit` w=1, `balanced` 0.5, `sustainability` 0) → `runs/ltm_exp<n>[_eff55|_eff90].json`;
+stages in `runs/ltm_exp<n>[...]/`, reused while their config (model hash, prices, reference, ES settings,
+`LTM_VERSION`) matches.
+
+| Row | What |
+|---|---|
+| `measured` | trial 52A practice replayed; its train means normalise the score |
+| `default` | measured practice through the lever's plan generator (`measured_x`); R: trial rotation + auto-irrigation — **Exp 1's comparison row** (`policy_vs_default`) |
+| `auto` | (I) trial management with auto-irrigation at the case efficiency |
+| `fixed` | CMA-ES open loop (N, I); every valid crop cycle of length ≤ 4 (R, 298 rotations) |
+| `es` | closed-loop ES policy per seed |
+| `frozen` | each policy's train decisions averaged (R: per-season majority), open loop |
+
+Decisions: R 8 (one crop per season; alfalfa = 3-yr stand; no crop twice running, potato
+≤ 1 in 3 years);
+N 53 (8 falls of manure 0–52 Mg DM nominal + 45 monthly urea); I 40 (monthly depth, cap
+1.5 × the trial's wettest month). Wall time (2026-10-26 runs at 200k, all 12 ES jobs in one
+pool on 10 cores): ~2.3 h per ES job (N), ~9 h (I, sharing the machine), 4.6–5.8 h (R, alfalfa
+plans run unbatched). Exp 3 efficiency cases: measured replay at 1.0 in every case; auto and
+generated schedules at the case efficiency; one shared Reference (OPEN_ITEMS L13).
+
 ## Crop models (`scripts/bench_rl.py`)
 
 ```bash

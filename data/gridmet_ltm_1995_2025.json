@@ -1,0 +1,53 @@
+{
+  "source": "gridMET (Abatzoglou 2013, doi:10.1002/joc.3413)",
+  "service": "http://thredds.northwestknowledge.net:8080/thredds/ncss/agg_met_<var>_1979_CurrentYear_CONUS.nc",
+  "lat": 42.5513,
+  "lon": -114.3541,
+  "years": [
+    1995,
+    2025
+  ],
+  "retrieved": "2026-10-25",
+  "packing": {
+    "pr": {
+      "scale_factor": 0.1,
+      "add_offset": 0.0,
+      "fill": 32767
+    },
+    "tmmx": {
+      "scale_factor": 0.1,
+      "add_offset": 220.0,
+      "fill": 32767
+    },
+    "tmmn": {
+      "scale_factor": 0.1,
+      "add_offset": 210.0,
+      "fill": 32767
+    },
+    "srad": {
+      "scale_factor": 0.1,
+      "add_offset": 0.0,
+      "fill": 32767
+    },
+    "rmax": {
+      "scale_factor": 0.1,
+      "add_offset": 0.0,
+      "fill": 32767
+    },
+    "rmin": {
+      "scale_factor": 0.1,
+      "add_offset": 0.0,
+      "fill": 32767
+    },
+    "vs": {
+      "scale_factor": 0.1,
+      "add_offset": 0.0,
+      "fill": 32767
+    },
+    "pet": {
+      "scale_factor": 0.1,
+      "add_offset": 0.0,
+      "fill": 32767
+    }
+  }
+}

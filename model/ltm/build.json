@@ -1,0 +1,29 @@
+{
+  "fert_p": "mid",
+  "probes": true,
+  "n_cycle": {
+    "f_act": 0.21556,
+    "default_f_act": 0.02,
+    "orgn_min_kept": 0.0008,
+    "target_kg_ha": 72.0,
+    "target_years": [
+      2013,
+      2014,
+      2016,
+      2018,
+      2020
+    ],
+    "fitted": "2026-10-25",
+    "engine_runs": 11,
+    "source": "Leytem et al. 2024 sec. 3.5 (control/fertilizer net INs, non-residue years)"
+  },
+  "start": 2012,
+  "end": 2020,
+  "treatments": {
+    "52A": "52a",
+    "fert": "fert",
+    "control": "ctrl"
+  },
+  "base": "model/crops/barl/TxtInOut",
+  "built": "2026-10-27"
+}

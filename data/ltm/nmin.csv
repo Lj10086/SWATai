@@ -1,0 +1,11 @@
+year,treatment,net_in_kg_ha,bag_in,bag_out,source,lo,hi
+2013,52A,134.54315723520003,2013-04-12,2013-09-12,W1 N Min 'Leytem' column; dates P1 Table 4,,
+2014,52A,135.52582680000003,2014-05-01,2014-10-09,W1 N Min 'Leytem' column; dates P1 Table 4,,
+2015,52A,317.5318751872928,2015-04-13,2015-10-12,W1 N Min 'Leytem' column; dates P1 Table 4,,
+2016,52A,181.27774215988322,2016-05-05,2016-11-11,W1 N Min 'Leytem' column; dates P1 Table 4,,
+2017,52A,284.91180551018056,2017-05-03,2017-10-11,W1 N Min 'Leytem' column; dates P1 Table 4,,
+2018,52A,189.78259732104073,2018-05-08,2018-10-09,W1 N Min 'Leytem' column; dates P1 Table 4,,
+2019,52A,291.4739482002103,2019-04-18,2019-10-10,W1 N Min 'Leytem' column; dates P1 Table 4,,
+2020,52A,143.2068310191102,2020-06-12,2020-10-06,W1 N Min 'Leytem' column; dates P1 Table 4,,
+0,fert,72.0,,,P1 3.5 (summary only; per-year values are in Figure 4),45.0,150.0
+0,control,72.0,,,P1 3.5 (summary only; per-year values are in Figure 4),45.0,150.0

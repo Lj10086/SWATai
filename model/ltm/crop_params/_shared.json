@@ -1,0 +1,13 @@
+{
+  "hydrology": {
+    "esco": 0.48,
+    "epco": 1.0,
+    "pet_co": 1.0
+  },
+  "engine_sha256": "a15cc50168e2488d",
+  "engine_files": [
+    "swatplus_62.0.0.linux",
+    "swatplus_rev62.0.0"
+  ],
+  "aiswat_dir": "/Users/ericdu/Desktop/projects/Ai-SWAT-Plus/calibration"
+}

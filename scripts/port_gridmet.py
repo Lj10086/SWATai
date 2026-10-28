@@ -27,6 +27,10 @@ the station record (Allen et al. 1998, FAO Irrigation and Drainage Paper 56, ch.
     uv run python scripts/port_gridmet.py                 # fetch (cached) + write the rotation
     uv run python scripts/port_gridmet.py --crops         # also every model/crops/*/TxtInOut
     uv run python scripts/port_gridmet.py --refresh       # re-download
+    uv run python scripts/port_gridmet.py --site ltm      # the long-term manure field -> model/ltm
+
+The LTM field (Leytem et al. 2025: 42 33' 4.5" N, 114 21' 14.7" W) is ~3 km west of the
+GRACEnet field and in the adjacent gridMET cell, so it has its own cache.
 """
 from __future__ import annotations
 
@@ -50,6 +54,19 @@ META = ROOT / "data" / "gridmet_kimberly_1995_2025.json"
 ET_CSV = ROOT / "data" / "observed_et_gridmet.csv"
 
 LAT, LON = 42.540, -114.320   # the field (hru.con), not the AgriMet station
+#: site: (lat, lon, cache stem, target TxtInOut)
+SITES = {
+    "gracenet": (42.540, -114.320, "gridmet_kimberly_1995_2025", ROTATION),
+    "ltm": (42.5513, -114.3541, "gridmet_ltm_1995_2025", ROOT / "model" / "ltm" / "TxtInOut"),
+}
+
+
+def use_site(name: str) -> Path:
+    """Point LAT/LON/CACHE/META at a site; returns its TxtInOut."""
+    global LAT, LON, CACHE, META
+    LAT, LON, stem, tio = SITES[name]
+    CACHE, META = ROOT / "data" / f"{stem}.csv", ROOT / "data" / f"{stem}.json"
+    return tio
 YEARS = (1995, 2025)
 THREDDS = "http://thredds.northwestknowledge.net:8080/thredds"
 VARS = {  # short name: netCDF variable
@@ -106,7 +123,14 @@ def fetch(var: str, y0: int, y1: int) -> pd.Series:
     return pd.Series({r[0][:10]: float(r[3]) for r in rows}, name=var)
 
 
-def download() -> pd.DataFrame:
+def _parse(text: str, var: str) -> pd.Series:
+    rows = [line.split(",") for line in text.splitlines()[1:] if line]
+    return pd.Series({r[0][:10]: float(r[3]) for r in rows}, name=var)
+
+
+def download(chunk_dir: Path | None = None) -> pd.DataFrame:
+    """Fetch (or, with ``chunk_dir``, assemble pre-fetched ``<var>_<year>.csv`` NCSS responses,
+    e.g. from a resumable shell loop when the service is flaky) and cache the unpacked record."""
     meta = {"source": "gridMET (Abatzoglou 2013, doi:10.1002/joc.3413)",
             "service": f"{THREDDS}/ncss/agg_met_<var>_1979_CurrentYear_CONUS.nc",
             "lat": LAT, "lon": LON, "years": YEARS, "retrieved": date.today().isoformat(),
@@ -117,7 +141,11 @@ def download() -> pd.DataFrame:
         for var in VARS:
             pk = packing(var)
             meta["packing"][var] = pk
-            parts = list(pool.map(lambda c: fetch(var, *c), chunks))
+            if chunk_dir is None:
+                parts = list(pool.map(lambda c: fetch(var, *c), chunks))
+            else:
+                parts = [_parse((Path(chunk_dir) / f"{var}_{y}.csv").read_text(), var)
+                         for y in range(YEARS[0], YEARS[1] + 1)]
             raw = pd.concat(parts)
             if (raw == pk["fill"]).any():
                 raise SystemExit(f"{var}: {int((raw == pk['fill']).sum())} fill values")
@@ -170,7 +198,8 @@ def write(tio: Path, w: pd.DataFrame, elev: float) -> None:
         sta = (tio / "weather-sta.cli").read_text()
         if data not in sta:
             raise SystemExit(f"{tio}/weather-sta.cli does not name {data}; wire it first")
-    print(f"  wrote {tio.relative_to(ROOT)} ({len(w)} days)")
+    shown = tio.relative_to(ROOT) if tio.is_relative_to(ROOT) else tio
+    print(f"  wrote {shown} ({len(w)} days)")
 
 
 def main() -> None:
@@ -179,17 +208,24 @@ def main() -> None:
     ap.add_argument("--crops", action="store_true", help="also every model/crops/*/TxtInOut")
     ap.add_argument("--only-crops", action="store_true")
     ap.add_argument("--refresh", action="store_true", help="re-download even if cached")
+    ap.add_argument("--site", choices=SITES, default="gracenet")
+    ap.add_argument("--from-chunks", type=Path, default=None,
+                    help="assemble <var>_<year>.csv NCSS responses from this directory")
     args = ap.parse_args()
+    site_tio = use_site(args.site)
 
-    if CACHE.is_file() and not args.refresh:
+    if args.from_chunks is not None:
+        df = download(args.from_chunks)
+    elif CACHE.is_file() and not args.refresh:
         df = pd.read_csv(CACHE, index_col="date", parse_dates=True)
     else:
         print("downloading gridMET ...")
         df = download()
     w = convert(df)
-    w[["year", "jday", "pet"]].rename(columns={"pet": "eto_mm"}).to_csv(ET_CSV, index=False)
+    if args.site == "gracenet":
+        w[["year", "jday", "pet"]].rename(columns={"pet": "eto_mm"}).to_csv(ET_CSV, index=False)
 
-    targets = [] if args.only_crops else [ROTATION]
+    targets = [] if args.only_crops else [site_tio]
     if args.crops or args.only_crops:
         targets += sorted(p / "TxtInOut" for p in CROPS.iterdir() if (p / "TxtInOut").is_dir())
     for tio in targets:

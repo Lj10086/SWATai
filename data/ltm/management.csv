@@ -1,0 +1,97 @@
+year,treatment,op,date,crop,note,source,n_kg_ha,p_kg_ha,p_kg_ha_lo,p_kg_ha_hi,dm_mg_ha,min_n_kg_ha,org_n_kg_ha,min_p_kg_ha,c_kg_ha,dm_frac_fresh,n_applied_p1,depth_mm
+2012,52A,manure,2012-10-20,,"target rate (user decision); dry lot, stacked; disked to 15 cm same day","W4 Fertilizer application (fractions x 5,200 kg/ha); C, DM: P1 Table 1",769.6,239.2,,,52.0,103.9,665.7,227.2,14872.0,0.586,864.0,
+2012,52A,tillage,2012-10-20,,fall disk/moldboard plow after manure; all treatments,P2 2.3,,,,,,,,,,,,150.0
+2013,52A,fert,2013-04-02,barley,"urea + MAP + KCl, incorporated same day",P1 Table 2 (N); P1 Table S1 (P),62.0,0.0,0.0,0.0,,,,,,,,
+2013,52A,plant,2013-04-04,barley,malt barley Moravian 69; straw baled+removed,P1 2.6,,,,,,,,,,,,
+2013,52A,harvest,2013-08-05,barley,malt barley Moravian 69; straw baled+removed,W4 Crop plant harvest,,,,,,,,,,,,
+2013,52A,manure,2013-10-20,,"target rate (user decision); dry lot, stacked; disked to 15 cm same day","W4 Fertilizer application (fractions x 5,200 kg/ha); C, DM: P1 Table 1",951.6,322.4,,,52.0,130.4,821.2,306.3,16588.0,0.357,1234.0,
+2013,52A,tillage,2013-10-20,,fall disk/moldboard plow after manure; all treatments,P2 2.3,,,,,,,,,,,,150.0
+2014,52A,fert,2014-04-16,sugarbeet,"urea + MAP + KCl, incorporated same day",P1 Table 2 (N); P1 Table S1 (P),0.0,0.0,0.0,0.0,,,,,,,,
+2014,52A,plant,2014-05-05,sugarbeet,NOT harvested: killed 10-28 [W4] to start decomposition; roots+tops returned,P1 2.6,,,,,,,,,,,,
+2014,52A,manure,2014-10-20,,"target rate (user decision); dry lot, stacked; disked to 15 cm same day","W4 Fertilizer application (fractions x 5,200 kg/ha); C, DM: P1 Table 1",624.0,187.2,,,52.0,144.1,479.9,177.8,9984.0,0.62,677.0,
+2014,52A,tillage,2014-10-20,,fall disk/moldboard plow after manure; all treatments,P2 2.3,,,,,,,,,,,,150.0
+2014,52A,harvest,2014-10-28,sugarbeet,NOT harvested: killed 10-28 [W4] to start decomposition; roots+tops returned,W4 Crop plant harvest,,,,,,,,,,,,
+2015,52A,fert,2015-04-02,wheat,"urea + MAP + KCl, incorporated same day",P1 Table 2 (N); P1 Table S1 (P),0.0,0.0,0.0,0.0,,,,,,,,
+2015,52A,plant,2015-04-02,wheat,hard red spring wheat Jefferson; straw baled+removed,P1 2.6,,,,,,,,,,,,
+2015,52A,harvest,2015-08-13,wheat,hard red spring wheat Jefferson; straw baled+removed,W4 Crop plant harvest,,,,,,,,,,,,
+2015,52A,manure,2015-10-20,,"target rate (user decision); dry lot, stacked; disked to 15 cm same day","W4 Fertilizer application (fractions x 5,200 kg/ha); C, DM: P1 Table 1",780.0,348.4,,,52.0,133.4,646.6,331.0,11440.0,0.515,871.0,
+2015,52A,tillage,2015-10-20,,fall disk/moldboard plow after manure; all treatments,P2 2.3,,,,,,,,,,,,150.0
+2016,52A,fert,2016-04-20,potato,"urea + MAP + KCl, incorporated same day; dates 2016-04-20,2016-05-25,2016-07-12",P1 Table 2 (N); P1 Table S1 (P),45.0,0.0,0.0,0.0,,,,,,,,
+2016,52A,plant,2016-05-02,potato,"Russet Burbank; N split preplant/PCU 5-25/urea 7-12, split not reported; tops returned",P1 2.6,,,,,,,,,,,,
+2016,52A,harvest,2016-10-15,potato,"Russet Burbank; N split preplant/PCU 5-25/urea 7-12, split not reported; tops returned",W4 Crop plant harvest,,,,,,,,,,,,
+2016,52A,manure,2016-10-20,,"target rate (user decision); dry lot, stacked; disked to 15 cm same day","W4 Fertilizer application (fractions x 5,200 kg/ha); C, DM: P1 Table 1",644.8,286.0,,,52.0,145.1,499.7,271.7,10192.0,0.545,659.0,
+2016,52A,tillage,2016-10-20,,fall disk/moldboard plow after manure; all treatments,P2 2.3,,,,,,,,,,,,150.0
+2017,52A,fert,2017-04-04,barley,"urea + MAP + KCl, incorporated same day",P1 Table 2 (N); P1 Table S1 (P),38.0,0.0,0.0,0.0,,,,,,,,
+2017,52A,plant,2017-04-06,barley,malt barley; straw baled+removed,P1 2.6,,,,,,,,,,,,
+2017,52A,harvest,2017-08-08,barley,malt barley; straw baled+removed,W4 Crop plant harvest,,,,,,,,,,,,
+2017,52A,manure,2017-10-20,,"target rate (user decision); dry lot, stacked; disked to 15 cm same day","W4 Fertilizer application (fractions x 5,200 kg/ha); C, DM: P1 Table 1",608.4,244.4,,,52.0,48.1,560.3,232.2,9100.0,0.539,684.0,
+2017,52A,tillage,2017-10-20,,fall disk/moldboard plow after manure; all treatments,P2 2.3,,,,,,,,,,,,150.0
+2018,52A,fert,2018-04-18,sugarbeet,"urea + MAP + KCl, incorporated same day",P1 Table 2 (N); P1 Table S1 (P),0.0,0.0,0.0,0.0,,,,,,,,
+2018,52A,plant,2018-05-01,sugarbeet,bulk harvest; tops returned,P1 2.6,,,,,,,,,,,,
+2018,52A,harvest,2018-10-09,sugarbeet,bulk harvest; tops returned,W4 Crop plant harvest,,,,,,,,,,,,
+2018,52A,manure,2018-10-20,,"target rate (user decision); dry lot, stacked; disked to 15 cm same day","W4 Fertilizer application (fractions x 5,200 kg/ha); C, DM: P1 Table 1",572.0,260.0,,,52.0,14.9,557.1,247.0,6448.0,0.5232,581.0,
+2018,52A,tillage,2018-10-20,,fall disk/moldboard plow after manure; all treatments,P2 2.3,,,,,,,,,,,,150.0
+2019,52A,fert,2019-04-12,wheat,"urea + MAP + KCl, incorporated same day",P1 Table 2 (N); P1 Table S1 (P),0.0,0.0,0.0,0.0,,,,,,,,
+2019,52A,plant,2019-04-13,wheat,hard red spring wheat; straw baled+removed,P1 2.6,,,,,,,,,,,,
+2019,52A,harvest,2019-08-16,wheat,hard red spring wheat; straw baled+removed,W4 Crop plant harvest,,,,,,,,,,,,
+2019,52A,manure,2019-10-20,,"target rate (user decision); dry lot, stacked; disked to 15 cm same day","W4 Fertilizer application (fractions x 5,200 kg/ha); C, DM: P1 Table 1",551.2,343.2,,,52.0,56.2,495.0,326.0,7124.0,0.568,735.0,
+2019,52A,tillage,2019-10-20,,fall disk/moldboard plow after manure; all treatments,P2 2.3,,,,,,,,,,,,150.0
+2020,52A,fert,2020-05-05,sugarbeet,"urea + MAP + KCl, incorporated same day",P1 Table 2 (N); P1 Table S1 (P),0.0,0.0,0.0,0.0,,,,,,,,
+2020,52A,plant,2020-05-07,sugarbeet,bulk harvest; tops returned,P1 2.6,,,,,,,,,,,,
+2020,52A,harvest,2020-10-12,sugarbeet,bulk harvest; tops returned,W4 Crop plant harvest,,,,,,,,,,,,
+2012,control,tillage,2012-10-20,,fall disk/moldboard plow after manure; all treatments,P2 2.3,,,,,,,,,,,,150.0
+2013,control,plant,2013-04-04,barley,malt barley Moravian 69; straw baled+removed,P1 2.6,,,,,,,,,,,,
+2013,control,harvest,2013-08-05,barley,malt barley Moravian 69; straw baled+removed,W4 Crop plant harvest,,,,,,,,,,,,
+2013,control,tillage,2013-10-20,,fall disk/moldboard plow after manure; all treatments,P2 2.3,,,,,,,,,,,,150.0
+2014,control,plant,2014-05-05,sugarbeet,NOT harvested: killed 10-28 [W4] to start decomposition; roots+tops returned,P1 2.6,,,,,,,,,,,,
+2014,control,tillage,2014-10-20,,fall disk/moldboard plow after manure; all treatments,P2 2.3,,,,,,,,,,,,150.0
+2014,control,harvest,2014-10-28,sugarbeet,NOT harvested: killed 10-28 [W4] to start decomposition; roots+tops returned,W4 Crop plant harvest,,,,,,,,,,,,
+2015,control,plant,2015-04-02,wheat,hard red spring wheat Jefferson; straw baled+removed,P1 2.6,,,,,,,,,,,,
+2015,control,harvest,2015-08-13,wheat,hard red spring wheat Jefferson; straw baled+removed,W4 Crop plant harvest,,,,,,,,,,,,
+2015,control,tillage,2015-10-20,,fall disk/moldboard plow after manure; all treatments,P2 2.3,,,,,,,,,,,,150.0
+2016,control,plant,2016-05-02,potato,"Russet Burbank; N split preplant/PCU 5-25/urea 7-12, split not reported; tops returned",P1 2.6,,,,,,,,,,,,
+2016,control,harvest,2016-10-15,potato,"Russet Burbank; N split preplant/PCU 5-25/urea 7-12, split not reported; tops returned",W4 Crop plant harvest,,,,,,,,,,,,
+2016,control,tillage,2016-10-20,,fall disk/moldboard plow after manure; all treatments,P2 2.3,,,,,,,,,,,,150.0
+2017,control,plant,2017-04-06,barley,malt barley; straw baled+removed,P1 2.6,,,,,,,,,,,,
+2017,control,harvest,2017-08-08,barley,malt barley; straw baled+removed,W4 Crop plant harvest,,,,,,,,,,,,
+2017,control,tillage,2017-10-20,,fall disk/moldboard plow after manure; all treatments,P2 2.3,,,,,,,,,,,,150.0
+2018,control,plant,2018-05-01,sugarbeet,bulk harvest; tops returned,P1 2.6,,,,,,,,,,,,
+2018,control,harvest,2018-10-09,sugarbeet,bulk harvest; tops returned,W4 Crop plant harvest,,,,,,,,,,,,
+2018,control,tillage,2018-10-20,,fall disk/moldboard plow after manure; all treatments,P2 2.3,,,,,,,,,,,,150.0
+2019,control,plant,2019-04-13,wheat,hard red spring wheat; straw baled+removed,P1 2.6,,,,,,,,,,,,
+2019,control,harvest,2019-08-16,wheat,hard red spring wheat; straw baled+removed,W4 Crop plant harvest,,,,,,,,,,,,
+2019,control,tillage,2019-10-20,,fall disk/moldboard plow after manure; all treatments,P2 2.3,,,,,,,,,,,,150.0
+2020,control,plant,2020-05-07,sugarbeet,bulk harvest; tops returned,P1 2.6,,,,,,,,,,,,
+2020,control,harvest,2020-10-12,sugarbeet,bulk harvest; tops returned,W4 Crop plant harvest,,,,,,,,,,,,
+2012,fert,tillage,2012-10-20,,fall disk/moldboard plow after manure; all treatments,P2 2.3,,,,,,,,,,,,150.0
+2013,fert,fert,2013-04-02,barley,"urea + MAP + KCl, incorporated same day",P1 Table 2 (N); P1 Table S1 (P),81.0,39.0,39.0,39.0,,,,,,,,
+2013,fert,plant,2013-04-04,barley,malt barley Moravian 69; straw baled+removed,P1 2.6,,,,,,,,,,,,
+2013,fert,harvest,2013-08-05,barley,malt barley Moravian 69; straw baled+removed,W4 Crop plant harvest,,,,,,,,,,,,
+2013,fert,tillage,2013-10-20,,fall disk/moldboard plow after manure; all treatments,P2 2.3,,,,,,,,,,,,150.0
+2014,fert,fert,2014-04-16,sugarbeet,"urea + MAP + KCl, incorporated same day",P1 Table 2 (N); P1 Table S1 (P),75.0,151.0,151.0,151.0,,,,,,,,
+2014,fert,plant,2014-05-05,sugarbeet,NOT harvested: killed 10-28 [W4] to start decomposition; roots+tops returned,P1 2.6,,,,,,,,,,,,
+2014,fert,tillage,2014-10-20,,fall disk/moldboard plow after manure; all treatments,P2 2.3,,,,,,,,,,,,150.0
+2014,fert,harvest,2014-10-28,sugarbeet,NOT harvested: killed 10-28 [W4] to start decomposition; roots+tops returned,W4 Crop plant harvest,,,,,,,,,,,,
+2015,fert,fert,2015-04-02,wheat,"urea + MAP + KCl, incorporated same day",P1 Table 2 (N); P1 Table S1 (P),107.0,19.0,19.0,19.0,,,,,,,,
+2015,fert,plant,2015-04-02,wheat,hard red spring wheat Jefferson; straw baled+removed,P1 2.6,,,,,,,,,,,,
+2015,fert,harvest,2015-08-13,wheat,hard red spring wheat Jefferson; straw baled+removed,W4 Crop plant harvest,,,,,,,,,,,,
+2015,fert,tillage,2015-10-20,,fall disk/moldboard plow after manure; all treatments,P2 2.3,,,,,,,,,,,,150.0
+2016,fert,fert,2016-04-20,potato,"urea + MAP + KCl, incorporated same day; dates 2016-04-20,2016-05-25,2016-07-12",P1 Table 2 (N); P1 Table S1 (P),365.0,98.0,98.0,98.0,,,,,,,,
+2016,fert,plant,2016-05-02,potato,"Russet Burbank; N split preplant/PCU 5-25/urea 7-12, split not reported; tops returned",P1 2.6,,,,,,,,,,,,
+2016,fert,harvest,2016-10-15,potato,"Russet Burbank; N split preplant/PCU 5-25/urea 7-12, split not reported; tops returned",W4 Crop plant harvest,,,,,,,,,,,,
+2016,fert,tillage,2016-10-20,,fall disk/moldboard plow after manure; all treatments,P2 2.3,,,,,,,,,,,,150.0
+2017,fert,fert,2017-04-04,barley,"urea + MAP + KCl, incorporated same day",P1 Table 2 (N); P1 Table S1 (P),136.0,16.0,16.0,16.0,,,,,,,,
+2017,fert,plant,2017-04-06,barley,malt barley; straw baled+removed,P1 2.6,,,,,,,,,,,,
+2017,fert,harvest,2017-08-08,barley,malt barley; straw baled+removed,W4 Crop plant harvest,,,,,,,,,,,,
+2017,fert,tillage,2017-10-20,,fall disk/moldboard plow after manure; all treatments,P2 2.3,,,,,,,,,,,,150.0
+2018,fert,fert,2018-04-18,sugarbeet,"urea + MAP + KCl, incorporated same day",P1 Table 2 (N); P1 Table S1 (P),115.0,38.0,38.0,38.0,,,,,,,,
+2018,fert,plant,2018-05-01,sugarbeet,bulk harvest; tops returned,P1 2.6,,,,,,,,,,,,
+2018,fert,harvest,2018-10-09,sugarbeet,bulk harvest; tops returned,W4 Crop plant harvest,,,,,,,,,,,,
+2018,fert,tillage,2018-10-20,,fall disk/moldboard plow after manure; all treatments,P2 2.3,,,,,,,,,,,,150.0
+2019,fert,fert,2019-04-12,wheat,"urea + MAP + KCl, incorporated same day",P1 Table 2 (N); P1 Table S1 (P),147.0,20.0,20.0,20.0,,,,,,,,
+2019,fert,plant,2019-04-13,wheat,hard red spring wheat; straw baled+removed,P1 2.6,,,,,,,,,,,,
+2019,fert,harvest,2019-08-16,wheat,hard red spring wheat; straw baled+removed,W4 Crop plant harvest,,,,,,,,,,,,
+2019,fert,tillage,2019-10-20,,fall disk/moldboard plow after manure; all treatments,P2 2.3,,,,,,,,,,,,150.0
+2020,fert,fert,2020-05-05,sugarbeet,"urea + MAP + KCl, incorporated same day",P1 Table 2 (N); P1 Table S1 (P),89.0,59.0,59.0,59.0,,,,,,,,
+2020,fert,plant,2020-05-07,sugarbeet,bulk harvest; tops returned,P1 2.6,,,,,,,,,,,,
+2020,fert,harvest,2020-10-12,sugarbeet,bulk harvest; tops returned,W4 Crop plant harvest,,,,,,,,,,,,

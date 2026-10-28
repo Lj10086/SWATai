@@ -2,99 +2,92 @@
 
 Working checklist for PAPER.md. Numbers are cited elsewhere; don't renumber.
 
-1. Replace Section 3.5 with the completed nitrogen-arm result.
-2. Find the journal version of the Richards et al. Magic Valley SWAT study (§1.1 cites a summary).
-3. Replace §1.1 population and snowpack claims with primary citations (Census; peer-reviewed
-   streamflow timing).
-4. *Closed 2026-09-14.* Prices sourced in `rewarders.py`: water $0.433/mm/ha (WD01 rental +
-   Schedule 24 pumping; pump head/efficiency/load factor assumed; range
-   `WATER_PRICE_RANGE`), manure $7.94/Mg, application pass $37.07/ha (n = 1; report breakeven
-   where pass count matters). Exp 2 artefacts before 2026-09-14 used different prices.
-5. *Closed.* GRACEnet N uptake is per cutting (alfalfa) / grain only (barley); not a target.
-6. Confirm whether the reference model's barley yield is grain or whole-plant.
-7. *Superseded by #11.*
-8. Confirm co-authors and affiliations.
-9. Production cluster runs for Exp 1–2 (Exp 3/4 cut). Pre-refit gate figures (+721.5, +836,
-   +2,042, +713) must not be cited; current gate is in #18.
-10. *Closed 2026-07-31.* Inputs reconciled to REF HRU 000140001; `pet_co` = 0.964 fitted to ETos.
-11. **Leaching column.** Percolation is threshold-behaved in applied water. Current
-    (`runs/percolation_check.json`, 2026-08-28):
+## LTM environment (2026-10-25; the paper's environment from now on)
 
-    | applied mm | perc mm/yr | NO₃ kg/ha/yr | mg/L |
-    |---|---|---|---|
-    | 2,363 (×0.6) | 0.00 | 0.00 | — |
-    | 3,151 (×0.8) | 0.00 | 0.00 | — |
-    | 3,939 (×1.0) | 0.00 | 0.00 | — |
-    | 4,727 (×1.2) | 16.08 | 1.22 | 7.6 |
-    | 5,366 (×1.4) | 76.82 | 8.28 | 10.8 |
-    | 5,778 (×1.6) | 117.11 | 27.49 | 23.5 |
+L1. *Closed 2026-10-25.* Potato tuber DM 0.214 = 1 − water 78.6 g/100 g, USDA-ARS FoodData
+    Central SR Legacy FDC 170027 "Potatoes, russet, flesh and skin, raw" (Foundation FDC 2346401
+    agrees). Potato $1,070/Mg DM. It also gives a check: measured 2016 potato 69.5 Mg/ha fresh ×
+    0.214 = 14.9 t DM vs 10.6 simulated (−29 %, the Ai-SWAT-Plus canopy problem, L5).
+L2. *Closed 2026-10-26.* Fertilizer P from Leytem et al. 2024 Table S1 (supplement): 52A and
+    control none; fertilizer plots 39/151/19/98/16/38/20/59 kg P/ha (2013–2020). S1's 2014 (151)
+    disagrees with Leytem et al. 2025 Table 3 (66); S1 is this field's record.
+L3. *Closed 2026-10-25.* Crop operating costs escalated to mean 2022–2024 dollars with USDA
+    NASS's index of prices paid by farmers (all farms, 2011=100; annual means 2017 106.93, 2019
+    110.26, 2022–24 139.32): ×1.264 (2019 budgets), ×1.303 (potato, 2017). `ltm/econ.py`.
+L4. **Soil N cycle: one parameter fitted** (active-humus fraction f = fr_hum_act =
+    n_act_frac) to the control's measured mineralisation (72 kg N/ha, non-residue years). The
+    rate `orgn_min` is kept at 0.0008: at its 0.006 ceiling the default pool gives 33 of 72.
+    Residue/manure mineralisation is never reported by rev 62 (`nut_nminrl.f90`; cf. #12), so
+    manured plots have no comparator; simulated is whole-profile vs 0–60 cm bags.
+L5. **Spring wheat runs on Ai-SWAT-Plus `wwht` parameters** (user decision); its calendar is
+    already spring (emerge 3/1). Potato runs on Ai-SWAT-Plus `pota` as-is (Ai-SWAT-Plus flagged
+    a failed canopy; user decision: copy and flag).
+L6. **Soil hydraulics are SSURGO** (mukey 80295: AWC 0.20/0.18, Ksat), texture/BD/OM/chemistry
+    measured. The only measured water retention is from four manure-treated plots in 2016 (AWC
+    ~0.12, 0–30 cm) and does not represent the starting soil.
+L7. *Closed 2026-10-25.* IPCC factors verified against the 2019 Refinement Vol. 4 Ch. 11
+    Tables 11.1/11.3 (aggregated Tier 1: EF1 0.010, EF4 0.010, EF5 0.011, FracGASF 0.11,
+    FracGASM 0.21; `rewarders.py`). Report as sensitivity: Kimberly is "dry" (P/PET < 1), where
+    the disaggregated EF1 and EF4 are 0.005 (direct N2O roughly halves).
+L8. **8-year episodes give ESS 1.34** on 7 test windows (user decision). Quote ESS intervals.
+L9. *Decided 2026-10-27 (user), replacing 2026-10-25's "no rules":* with no rules Exp 1 grew
+    potato 8 years running (`runs/ltm_exp1.json`, LTM_VERSION 2), which SWAT+ cannot penalise (no
+    soilborne disease/nematode module). Rules now: no crop two years running except inside one
+    3-yr alfalfa stand (a stand may not follow a stand); potato at most once in any 3 years
+    ("potatoes followed by two years of grain", the most common Idaho rotation, 38 % of growers:
+    Patterson & Bohl 1995, UI A.E. Extension Series 95-4; "not more than one crop of potatoes in
+    succession": McDole & Dallimore 1973, UI Current Information Series 200). Sugarbeet gets the
+    no-repeat rule only: the trial grows it in 2018 and 2020. Exp 1 searches 298 cycles (≤ 4 yr).
+    Still a limitation: within the rules, yield does not respond to the rotation's disease load.
+L10. **52A over-mineralises after the soil-N fit** (humus-only mineralisation > measured total
+    in 5 of 5 non-residue years; `runs/ltm_validation.json`): manure-plot leaching is an upper
+    bound. The manure split `rtof` is not identifiable from reported fluxes.
+L11. *Closed 2026-10-25; refitted 2026-10-27.* Auto-irrigation = one 25.4 mm (gross) pass
+    whenever profile plant-available water < sw_frac × its FC value, window = first measured
+    event .. 7 days before harvest; sw_frac root-found at efficiency 1.0 so the rule applies the
+    trial's 4,542 mm (2013–2020) under its rotation (`scripts/ltm_fit_auto_irr.py` →
+    `model/ltm/auto_irr.json`): 0.7236, 0.7523 after the spin-up beans (L14). At 80 % efficiency
+    the same rule pumps more. Found on the way: Ai-SWAT-Plus's `build_irrigation_dtl` writes
+    lim_op "-" (target FC − 0.95 mm, i.e. irrigate whenever below FC), not "0.95 × FC" as its
+    docstring says; its crop fits ran under that. Raise it in Ai-SWAT-Plus.
+L12. *Decided 2026-10-25 (user).* Manure on the collaborator's target-rate basis, which is 1.5–25 %/yr
+    below Leytem et al. 2024 Table 2's applied N (and P vs the 2025 paper). State it with Exp 2.
+L13. *Decided 2026-10-27 (user).* **Irrigation efficiency.** SWAT+ puts amount × efficiency in
+    the soil; water is costed and scored gross. Cases from Irmak et al. 2011 (UNL Extension EC732)
+    Table 2 midpoints: 0.55 furrow, 0.80 center pivot / solid set, 0.90 surface drip. The
+    measured replay stays at 1.0: at 0.8 the trial's own water never drains the profile in
+    2013–2020 (percolation 0, leaching 0, the score's NO₃ reference would be 0) and yields fall
+    11–46 %. Auto-irrigation and every generated schedule run at the case efficiency: 0.80 in
+    Exp 1 and the Exp 3 base, 0.55 and 0.90 as Exp 3 cases (`ltm_exp3_eff55`, `_eff90`).
+L14. *Decided 2026-10-27 (collaborator setup, G. Richards email).* Spin-up year = pinto beans,
+    auto-irrigated, 100 kg/ha N + 50 kg/ha P at planting (date: user decision, Jul 1), in the
+    validation build (2012) and in every episode's spin-up year. Raises 2013–2020 leaching
+    (52A 1,190 → 1,389, control 226 → 394 kg N/ha); validation otherwise ~unchanged
+    (`runs/ltm_validation.json`).
+L15. **2020 sugarbeet P uptake.** The collaborator corrected his SWAT run's 56.5 to 68.5 kg P/ha;
+    it is a simulated value (no 2020 sugarbeet plant data from the trial), so it is not used as a
+    target (rule: SWAT-output columns in the workbooks are not ported).
+L16. *Decided 2026-10-27 (user).* Budgets halved: Exp 1 50k, Exp 2/3 100k HRU-episode steps per
+    ES seed (every policy had settled by then in the 200k runs: Exp 1 by its first checkpoint).
+    CMA-ES matched. *Reversed 2026-10-28 (user):* full budgets restored (Exp 1 100k, Exp 2/3
+    200k) with 8 seeds, since the v3 batch finished in ~6 h (`runs/archive/ltm_v3_20261028/`).
 
-    Zero at measured practice and default; λ_n only separates arms that over-irrigate ≥ 20 %.
-    Test windows at measured practice: 16.01 / 0.10 / 0.33 / 0.00 / 5.71 mm perc. Usable for
-    within-model ranking only; not validated on site. Cause of drift from the 2026-08-06 table
-    is unestablished (likely `alfa.bm_e` 12.25 → 17.0). Alfalfa soil-NO3 rise is unreachable
-    (rule 13), so leaching can't be validated here; the paper must say so. The manuscript also
-    needs the ET/PET engine-difference finding (rev 62 vs SWAT2012).
-12. **`rsd_decomp` inert; manure organic N never enters fresh residue** (`rsd_nitorg_n` = 0).
-    `fresh_manure` tagging ruled out. Likely rev 62 `fert` routes organic N straight to humus.
-    Confirm against rev 62 source before attributing the mineralisation shortfall to the engine.
-13. **Methodology principles** (tests in `test_stats.py`, `test_plan_env.py`): `paired()`
-    reports `se_ess`, no `se`; open-loop and policy share `plan.evaluate`; `run_all.sh` reuses
-    one gate and exits 2 on failure. Still binding: re-scoring a winner across λ is not
-    re-selecting it.
-14. *Resolved 2026-08-28.* Under workbook params corn N stress fell to 5.2 d; the test now
-    asserts the annual crops collectively (barley 35.7 d) vs alfalfa 0
-    (`test_annuals_are_n_stressed_and_alfalfa_is_not`).
-15. **`pet_co` stays 0.964 — decided, don't reopen** without on-site crop-ET data. ET protocol
-    run vs regional OpenET (`et_nostress.py`/`et_gap_check.py`, removed 2026-09-30; in git
-    history; outputs `runs/et_*.json`): nitrogen
-    moves ET < 0.4 %; canopy moves Kc ≤ 0.02 (LAI already saturated); ~25–40 % of the gap is
-    water supply (irrigation management); no single `pet_co` fits all crops. Report in-crop ET
-    11–31 % below the benchmark (21 other fields, 2020–22) as a limitation.
-16. **`adaptivity_value` is unresolvable at 3 seeds.** Pre-refit per-seed: −96.4 / −344.1 /
-    +890.1 (mean +149.8 from one seed). `advantage_over_fixed` −328.7 / −632.2 / −193.8 (mean
-    −384.9) is sign-consistent: PPO loses to matched-budget CMA. Don't average the adaptivity
-    decomposition; estimate the seeds needed from this spread before more cluster time.
-    Re-check both on the refit model (#18). **Confounded until rerun (2026-10-23):** those PPO
-    runs started from zero water (mean action 0.055, 48 % of actions clipped to 0) while CMA-ES
-    started at measured practice, and the renderer let a later month's water land in an
-    earlier, already-observed month. Both are fixed (residual actions; no carry-back); don't
-    cite these numbers as evidence about PPO.
-17. *Closed 2026-09-28.* PAPER.md has no Exp 3/4 sections; Exp 1 numbers there are pre-refit
-    (#18).
-18. **All experiments must be (re-)run: `scripts/run_all.sh`.** Model refit 2026-09-10
-    (`PARAMS` = N cycle only; PROVENANCE §6); prices sourced 2026-09-14; code simplified
-    2026-09-30 (Exp 2 now monthly, no N cap). The 2026-09-11 ceiling (+360.8 $/ha, ESS CI
-    [220, 502], `gate_pass: true`), controller and Exp 1 CMA run used pre-09-14 prices and are in
-    `runs/archive/pre_price_20260914/`; pre-refit copies in `runs/archive/pre_refit_20260910/`.
-    Paired differences (signs) should survive; $/ha levels will not.
-19. *Closed 2026-09-28.* `runs/calibration.json` is tracked; `optimize.py` refuses to
-    overwrite `--out` without `--overwrite`.
-20. **Grower rule** (`exp1_grower_rule`): controller fitted to the logs; a human bar that
-    responds to weather. In `run_all.sh`. To do: run (#18), fill Table 3, disclose in §6.2
-    (test-period weather, not fitted to profit, reference row), report fit R² and per-year totals.
-21. *Closed 2026-10-23.* PAPER.md §3–4 match the code: no N cap or repair, channel 10, the
-    nitrogen arm's action, 40/20 steps, prices ($7.94, $37.07, final 2024 NASS), ESS 1.25 and
-    the moving-block bootstrap (now implemented), restored A2 tests, the equal-search ceiling and
-    the controller's engine-run budget. Results sections (§6) still quote pre-fix numbers until
-    the rerun (#18).
-22. **Crop models (`model/crops`, `swat_gym.crop`, `scripts/bench_rl.py`).** Ai-SWAT-Plus
-    monoculture builds, copied; their yields are not validated against Kimberly, so quote
-    paired differences only. Sugarbeet price assumes 23 % root dry matter (unsourced). Report
-    any batching use with `tests/test_batch.py` passing: SWAT+ rev 62 keeps N/P demand per
-    plant, not per HRU (`pl_nut_demand.f90`; it also resets `uapd(ipl)` with a stale loop
-    index), so alfalfa breaking dormancy reads the previous HRU's demand. The same stale value
-    exists in single-HRU runs (same HRU, previous day): small, but a real engine bug worth
-    reporting upstream and fixing in the Ai-SWAT-Plus engine build.
+L17. *Decided 2026-10-28 (user).* Sustainability profit floor. In v3, every Exp 3 efficiency
+    case's w = 0 optimum was no irrigation (crops fail, −1,921 $/ha/yr) because w = 0 values
+    profit at nothing. The floor is default practice's train-mean profit per lever and
+    efficiency case. Each episode below it loses `FLOOR_PENALTY` (10) × shortfall / reference
+    profit, graded so CMA-ES can steer back. It applies on every path, test scoring included
+    (`Reference.score`; `test_profit_floor_only_binds_sustainability`).
 
-## Moved to supplementary material (must exist before submission)
+L18. *Fixed 2026-10-28.* ES v1 defects, found in the v3 results:
+    (a) `crops_ga.centered_ranks` ranks ties by list order. A population tied on a plateau
+        then takes full Adam steps along a fake gradient. In Exp 2 every policy reached "no
+        manure, no N" by generation ~16, sat there with median = max fitness, and all 4 seeds
+        ended identical, $78/ha/yr below the fixed plan. LTM ES now averages tied ranks
+        (`test_tied_fitness_gives_no_gradient`). The crop benchmark keeps the old function so
+        its cited results stay reproducible.
+    (b) ES scored 3 random train windows per generation while CMA-ES scores all 7, so ES
+        optimised a noisy subset of the same objective. Its Exp 3 curves peaked mid-run and
+        drifted down, and the policy trailed the fixed plan by $50–75/ha/yr on every seed. ES
+        now uses all 7 (about 44 generations at 200k for Exp 3).
 
-- Input-reconciliation table (10 rows: `orgn_min`, soil profile, initial NO3/P, barley HI,
-  solar, wgn station, bulk density, manure incorporation, object areas, sim window).
-- Morris screen: 17 params, bounds, four dropped as inert (`n_uptake`, `n_perc`, corn
-  `tmp_opt`, `esco`).
-- Before/after reconciliation table (PET, ET, per-crop yield, NO₃ leached).
-- Engine quirks: standalone `kill` ignored (use `hvkl`); `op_data3` on `plnt` is not PHU and
-  crashes the engine.
-- Runner correctness properties and regression tests.
-- Object-area fix made every path ~3× faster (engine was routing a 1,432 ha network).
