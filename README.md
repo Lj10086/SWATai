@@ -1,95 +1,33 @@
 # swat-kimberly
 
-A SWAT+ model of one field of the USDA-ARS **long-term manure (LTM) trial** at Kimberly, Idaho,
-wrapped as an optimisation environment (`swat_gym.ltm`).
+This repository provides a **reinforcement-learning environment built on a calibrated SWAT+
+model of an irrigated field at Kimberly, Idaho**. The model represents the south field of the
+USDA-ARS long-term manure (LTM) trial, 2012–2020, and is run through the official SWAT+ engine
+(rev 62.0.0). The environment (`swat_gym.ltm`) exposes crop rotation, nitrogen management and
+irrigation as decision levers, and scores each management plan on crop yield and on four
+sustainability costs: nitrate leaching, irrigation water, phosphorus loss and buildup, and N₂O.
 
-**The question.** Can a learned management policy maximise **crop yield** while limiting four
-sustainability costs?
-- nitrate leaching
-- irrigation water
-- phosphorus loss and buildup
-- N₂O
+The research question is whether a learned, state-dependent management policy can outperform
+both the trial's own practice and the best fixed (open-loop) plan found at the same simulation
+budget. The evaluation protocol separates the two effects: the gain from search alone, and the
+additional gain from adapting to the simulated soil state.
 
-The policy is compared with the trial's own practice and with the best fixed plan.
+## Installation and usage
 
-## In one minute
-
-- **SWAT+** is a process-based agro-hydrology model: daily weather, soil, crops and management
-  in; yields, water and nutrient flows out. This repo runs the official rev 62.0.0 engine as a
-  black box: it writes input files, runs the engine, and reads the outputs.
-- **The field.** The trial's south field, 2012–2020. 2012 pinto beans are spin-up, then barley →
-  sugarbeet → spring wheat → potato → barley → sugarbeet → spring wheat → sugarbeet. There are
-  three treatments, one HRU (simulated unit) each:
-  - 52A: 52 Mg/ha DM dairy manure every fall
-  - fertiliser-only
-  - control
-- **An episode** replays that 8-season management on a different 9-year stretch of weather
-  (gridMET, 1995–2025). Train and test episodes never share a calendar year.
-- **Three experiments, one lever each:**
-  - Exp 1: crop rotation
-  - Exp 2: nitrogen, manure vs synthetic
-  - Exp 3: monthly irrigation, at 55 / 80 / 90 % application efficiency
-- **Three strategies**, each a fixed weighting: `yield` (w = 1), `balanced` (0.5) and
-  `sustainability` (0).
-  - score = w · relative yield − (1 − w) · mean sustainability cost.
-  - Both parts are normalised by measured practice.
-  - Profit is reported but not scored.
-- **Methods compared per strategy:**
-  - a closed-loop policy trained with OpenAI-ES, which reacts to the simulated soil state;
-  - the best open-loop plan, from CMA-ES at the same simulation budget (Exp 1 also scores every
-    rotation exhaustively).
-
-  The gap between the two measures whether reacting to the soil state helps.
-
-**What results can claim.** These bounds hold for every result; state them alongside any result:
-- **Crop parameters** come from the sister project Ai-SWAT-Plus, copied verbatim and never
-  fitted here. Potato under-yields, and spring wheat uses the winter-wheat parameters. Each
-  crop's yield bias therefore matters to rotation results.
-- **Leaching** is not validated on site.
-- **N₂O** is IPCC Tier 1 accounting. SWAT+ does not simulate it.
-- **Calibration.** One soil-N parameter is fitted, to the control's measured mineralisation.
-  Nothing else is calibrated.
-
-## Repository map
-
-| Path | What |
-|---|---|
-| `src/swat_gym/ltm/` | the environment: practice templates, schedule rendering, the batched engine runner, the score, prices, the closed-loop env, ES, train/test windows |
-| `src/swat_gym/experiments/ltm.py` | the experiment driver (`--lever R\|N\|I`, `--irr-eff`) |
-| `src/swat_gym/{fastrunner,engine,manifest,printprt}.py` | running the SWAT+ engine repeatedly in a temp copy of a model |
-| `src/swat_gym/stats.py` | paired comparisons over overlapping weather windows (ESS, block bootstrap) |
-| `src/swat_gym/tests/test_ltm.py` | the environment's tests (below) |
-| `model/ltm/TxtInOut/` | the built SWAT+ model and engine binaries (macOS, Linux) |
-| `model/ltm/crop_params/` | each crop's Ai-SWAT-Plus parameters (`scripts/ltm_crop_params.py`) |
-| `model/crops/` | Ai-SWAT-Plus single-crop models: the barley one is the LTM build's base |
-| `data/ltm/` | the trial's measurements, one source per row (`scripts/port_ltm.py`) |
-| `data/gridmet_*.csv` | cached gridMET weather (`scripts/port_gridmet.py`) |
-| `scripts/` | model build, validation, reports and the run script (below) |
-| `runs/` | outputs (gitignored) |
-| `paper/` | manuscript template (Elsevier CAS) |
-| `legacy/` | the retired GRACEnet environment and crop-model benchmark (see `legacy/README.md`) |
-
-Docs:
-- `EXPERIMENTS.md`: how to run, rows and budgets.
-- `PROVENANCE.md`: where every model input came from.
-- `OPEN_ITEMS.md`: decisions, with dates and reasons, and what is still open.
-
-## Setup and run
-
-Requires [uv](https://docs.astral.sh/uv/). Engine runs are CPU-bound, and every job uses all
-cores.
+Requires [uv](https://docs.astral.sh/uv/). Engine runs are CPU-bound, and each job uses all
+available cores.
 
 ```bash
 uv sync --all-extras
 uv run pytest                                                         # ~30 s
-SMOKE=1 bash scripts/run_ltm.sh                                       # every experiment, tiny budgets
+SMOKE=1 bash scripts/run_ltm.sh                                       # all experiments, small budgets
 perl -e 'use POSIX; setsid(); exec @ARGV' -- bash scripts/run_ltm.sh  # full run, ~6 h, detached
-uv run python scripts/ltm_nutrient_summary.py                         # water/nutrient report
+uv run python scripts/ltm_nutrient_summary.py                         # water and nutrient report
 ```
 
 ### Rebuilding the model
 
-Each step is idempotent, and the outputs are committed.
+Each step is idempotent, and its outputs are committed.
 
 ```bash
 uv run python scripts/port_ltm.py           # trial workbooks -> data/ltm/*.csv
@@ -97,36 +35,120 @@ uv run --project ~/Desktop/projects/Ai-SWAT-Plus/calibration python scripts/ltm_
 uv run python scripts/port_gridmet.py       # gridMET at the field (cached download)
 uv run python scripts/build_ltm.py          # -> model/ltm/TxtInOut
 uv run python scripts/ltm_calibrate_n.py --apply && uv run python scripts/build_ltm.py
-uv run python scripts/ltm_validate.py       # vs measurements -> runs/ltm_validation.json
+uv run python scripts/ltm_validate.py       # comparison with measurements -> runs/ltm_validation.json
 uv run python scripts/ltm_fit_auto_irr.py   # auto-irrigation trigger (management, not calibration)
 ```
 
-`port_ltm.py` reads the collaborator's workbooks, and `ltm_crop_params.py` reads the
-Ai-SWAT-Plus checkout. Neither source is in this repo.
+`port_ltm.py` reads the collaborator's workbooks and `ltm_crop_params.py` reads the
+Ai-SWAT-Plus repository; neither source is included here.
 
-## What the tests pin
+## Model
 
-`src/swat_gym/tests/test_ltm.py` checks:
+- **Engine.** SWAT+ rev 62.0.0, run as a black box: the code writes input files, runs the
+  engine and reads its outputs (`swat_gym.fastrunner`).
+- **Site and period.** South field of the LTM trial, Kimberly, Idaho. The 2012 pinto-bean crop
+  is spin-up, followed by eight seasons: barley, sugarbeet, spring wheat, potato, barley,
+  sugarbeet, spring wheat, sugarbeet.
+- **Treatments.** One hydrologic response unit (HRU) per treatment:
+  - 52A: 52 Mg/ha dry-matter dairy manure applied each fall;
+  - fertiliser only;
+  - unamended control.
+- **Inputs.** Trial measurements (`data/ltm/`, each row with its source) override SSURGO
+  defaults. Weather is gridMET at the field, 1995–2025.
+- **Calibration.**
+  - Crop parameters are those fitted in the companion project Ai-SWAT-Plus, copied without
+    modification.
+  - One soil-nitrogen parameter (the active-humus fraction) is fitted to the control
+    treatment's measured mineralisation.
+  - No other parameter is calibrated. `scripts/ltm_validate.py` compares the model with the
+    trial's measurements.
+
+## Environment and experiments
+
+An episode replays the trial's eight-season management on a different nine-year stretch of
+weather. Training and test episodes share no calendar year (training windows start
+1995–2001, test windows 2011–2017).
+
+Each experiment varies one lever and holds the others at trial practice:
+
+| Experiment | Lever | Decisions |
+|---|---|---|
+| 1 | Crop rotation | crop per season from barley, sugarbeet, spring wheat, potato, corn silage, alfalfa |
+| 2 | Nitrogen | fall manure rate and monthly synthetic N |
+| 3 | Irrigation | monthly depth, at 55, 80 and 90 % application efficiency |
+
+Plans are scored under three fixed strategies with weight w ∈ {1, 0.5, 0} (`yield`,
+`balanced`, `sustainability`):
+
+    score = w · ry / ry_meas − (1 − w) · mean_k(term_k / term_k,meas)
+
+where ry is relative harvested yield and term_k are the four sustainability costs, each
+normalised by measured practice. Profit is reported but not scored.
+
+Each strategy compares two methods:
+- a closed-loop policy trained with OpenAI evolution strategies (ES), which observes the
+  simulated soil state;
+- the best open-loop plan found by CMA-ES at an equal engine budget. Experiment 1 also
+  evaluates every admissible rotation exhaustively.
+
+Run settings, result rows and reporting rules are documented in `EXPERIMENTS.md`.
+
+## Limitations
+
+The following limits apply to every result and should be stated alongside it:
+- **Crop parameters** are not fitted to this site. Potato is under-predicted, and spring wheat
+  uses winter-wheat parameters. Crop-specific yield bias therefore affects rotation results.
+- **Nitrate leaching** has not been validated against on-site measurements.
+- **N₂O** is estimated with IPCC Tier 1 emission factors. SWAT+ does not simulate it.
+
+## Repository structure
+
+| Path | Contents |
+|---|---|
+| `src/swat_gym/ltm/` | environment: practice templates, schedule rendering, batched engine runner, score, prices, closed-loop environment, ES, train/test windows |
+| `src/swat_gym/experiments/ltm.py` | experiment driver (`--lever R\|N\|I`, `--irr-eff`) |
+| `src/swat_gym/{fastrunner,engine,manifest,printprt}.py` | repeated SWAT+ execution in a temporary copy of the model |
+| `src/swat_gym/stats.py` | paired comparisons over overlapping weather windows (effective sample size, block bootstrap) |
+| `src/swat_gym/tests/test_ltm.py` | environment tests |
+| `model/ltm/TxtInOut/` | built SWAT+ model and engine binaries (macOS, Linux) |
+| `model/ltm/crop_params/` | per-crop Ai-SWAT-Plus parameters |
+| `model/crops/` | Ai-SWAT-Plus single-crop models; the barley model is the LTM build's base |
+| `data/ltm/` | trial measurements, one source per row |
+| `data/gridmet_*.csv` | cached gridMET weather |
+| `scripts/` | model build, validation, reports and the run script |
+| `runs/` | outputs (not tracked) |
+| `paper/` | manuscript template (Elsevier CAS) |
+| `legacy/` | retired GRACEnet environment and crop-model benchmark (`legacy/README.md`) |
+
+Documentation:
+- `EXPERIMENTS.md`: running the experiments, budgets and result rows.
+- `PROVENANCE.md`: sources of every model input.
+- `OPEN_ITEMS.md`: dated design decisions and open issues.
+- `ARTIFACTS.md`: index of published report pages.
+
+## Tests
+
+`src/swat_gym/tests/test_ltm.py` verifies that:
 - a closed-loop episode equals the open-loop run of its final plan, for every score term;
-- the zero policy replays measured practice;
-- K plans batched as K HRUs equal K single runs, alfalfa included;
-- truncated runs and the output cache change nothing;
-- an engine crash during ES is survived;
-- water is counted gross of efficiency;
-- auto-irrigation stays inside its windows;
-- the rotation rules and their action mask agree;
-- the yield floor binds only the sustainability strategy;
-- tied ES fitness gives no gradient.
+- the zero policy reproduces measured practice;
+- K plans batched as K HRUs equal K single runs, including alfalfa;
+- truncated runs and the output cache do not change results;
+- the ES loop survives an engine crash;
+- irrigation water is counted gross of application efficiency;
+- auto-irrigation stays within its windows;
+- the rotation rules agree with the action mask;
+- the yield floor applies only to the sustainability strategy;
+- tied ES fitness produces no gradient.
 
-## Engine quirks (rev 62)
+## SWAT+ rev 62 behaviour relied on
 
-- A `plant` condition in `calibration.cal` only matches a community's first plant. The per-crop
-  `phu_mat` lines therefore use the condition variable `phu_plant`.
-- Decision-table plant conditions also resolve to plant 1 only.
-- A standalone `kill` op is ignored. End crops with `hvkl`.
-- `op_data3` on `plnt` is not heat units, and it crashes the engine. PHU comes from `days_mat`.
-- `days_mat`/`yrs_mat` must be written as integers, or the `plants.plt` row mis-parses.
-- Irrigation puts `amt × eff × (1 − surq)` into the soil, and `hru_wb irr` reports that net
+- A `plant` condition in `calibration.cal` matches only a community's first plant, so the
+  per-crop `phu_mat` lines use the condition variable `phu_plant`.
+- Decision-table plant conditions also resolve to the first plant only.
+- A standalone `kill` operation is ignored; crops are ended with `hvkl`.
+- `op_data3` on `plnt` is not heat units and crashes the engine; PHU is set from `days_mat`.
+- `days_mat` and `yrs_mat` must be written as integers, or the `plants.plt` row is misparsed.
+- Irrigation delivers `amt × eff × (1 − surq)` to the soil, and `hru_wb irr` reports this net
   amount. Water is scored gross (net ÷ eff).
-- SWAT+ reports soil NO₃ and solution P only as whole-profile totals. Daily values come from
-  0-kg fertiliser "probe" operations, whose management-output rows carry the soil state.
+- SWAT+ reports soil NO₃ and solution P only as whole-profile totals. Daily values are taken
+  from 0-kg fertiliser "probe" operations, whose management-output rows record the soil state.
