@@ -10,13 +10,11 @@ __pycache__/
 /diagnostics.out
 /files_out.out
 /erosion.txt
-/et_nitrogen_calibration_report.txt
+/legacy/et_nitrogen_calibration_report.txt
 
-# Tracked run outputs (cited in code / the only calibration record). Must be `runs/*` above
-# for these negations to work.
-!runs/exp1b_price_ratio.json
-!runs/exp1c_cadence_e500.json
-!runs/calibration.json
+# SWAT+ engine spillover inside model/ (runs happen in temp copies; these are strays)
+/model/*.out
+/model/erosion.txt
 
 PAPER.md
 CLAUDE.md

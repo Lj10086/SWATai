@@ -12,7 +12,7 @@ Exp 1 (rotation) needs each crop's practice outside its trial year: a trial crop
 template year (barley 2013, sugarbeet 2018, wheat 2015, potato 2016), its 52A fertiliser and
 that year's measured irrigation summed by month; alfalfa and corn silage (not in the trial)
 take the Ai-SWAT-Plus spec dates, no synthetic N (manure supplies it, as for 52A in most
-years), and the crop model's own monthly irrigation (crop_env.default_x, lever I).
+years), and the crop model's own monthly irrigation (model/ltm/exp1_irr_monthly.json).
 
 Auto-irrigation (user decision 2026-10-25: every Exp 1 season, and an Exp 3 baseline): a
 soil-water-triggered table (``AUTO_IRR``) inside each season's irrigation window(s) --
@@ -39,6 +39,8 @@ from .windows import SEASONS
 DATA = PROJECT_ROOT / "data" / "ltm"
 PARAMS = PROJECT_ROOT / "model" / "ltm" / "crop_params"
 TXTINOUT = PROJECT_ROOT / "model" / "ltm" / "TxtInOut"
+#: alfalfa's and corn silage's monthly irrigation (Exp 1; not trial crops), see the file's "source"
+EXP1_IRR_MONTHLY = PROJECT_ROOT / "model" / "ltm" / "exp1_irr_monthly.json"
 
 CROPS = ("barl", "sgbt", "wwht", "pota", "corn", "alfa")
 TRIAL_ROTATION = ("barl", "sgbt", "wwht", "pota", "barl", "sgbt", "wwht", "sgbt")
@@ -120,7 +122,7 @@ SGBT_2014_HARVEST_FROM = 2018
 TREATMENT = "52A"
 #: Irrigation passes: at most this many mm on one day (the trial's events are mostly 1 inch).
 IRR_PASS_MM = 25.4
-N_MONTH_MAX = 150.0                       #: kg N/ha per month, as swat_gym.crop
+N_MONTH_MAX = 150.0                       #: kg N/ha per month (as the legacy crop models)
 N_PRODUCT, MAP = "elem_n", "ltm_map"
 MAP_N, MAP_P = 0.11, 0.227
 
@@ -236,14 +238,8 @@ def crop_season(crop: str) -> Season:
         t = trial_season(TEMPLATE_YEAR[crop] - TRIAL_START)
         return Season(t.crop, t.plant, t.harvest, t.harv_op, fert=t.fert,
                       irr_monthly=t.irr_monthly, irr_windows=t.irr_windows)
-    from ..crop import lever_months
-    from ..crop_env import default_x
-    from ..spec import load_crop
-    spec = load_crop({"corn": "csil", "alfa": "alfa"}[crop])
-    cache = default_x(spec, "I")
-    from ..crop import to_amount
-    mm = to_amount(spec, "I", cache)
-    monthly = tuple((m.mon, float(a)) for m, a in zip(lever_months(spec, "I"), mm))
+    monthly = tuple((int(m), float(mm)) for m, mm in
+                    json.loads(EXP1_IRR_MONTHLY.read_text())[crop])
     rec = _crop_params(crop)["spec"]
     cuts = tuple(tuple(h) for h in rec["harvests"])
     return Season(crop, tuple(rec["emerge"]), cuts[-1], _crop_params(crop)["harv_op"],
@@ -280,8 +276,26 @@ def manure_kg(fall: int, x: float) -> float:
     return float(np.clip(x, 0.0, 1.0)) * manure(fall)[1] if x > MANURE_DEAD_ZONE else 0.0
 
 
-#: As plan.N_DEAD_ZONE: CMA-ES "zeros" (1e-6) must not buy a manure pass.
+#: As N_DEAD_ZONE: CMA-ES "zeros" (1e-6) must not buy a manure pass.
 MANURE_DEAD_ZONE = 0.05
+
+#: Synthetic-N lever values at or below this share of the range apply nothing; above it the
+#: range is rescaled so the maximum is unchanged. An application pass costs the same at any
+#: rate, so without a dead zone an optimizer whose samples never land exactly on 0 (CMA-ES
+#: returns 1e-6, not 0) pays a full pass for sub-gram applications. Same mapping on every path.
+N_DEAD_ZONE = 0.05
+
+
+def n_amount(x, max_amount: float):
+    """Unit-box N lever value(s) -> applied amount, with the dead zone."""
+    x = np.clip(np.asarray(x, dtype=float), 0.0, 1.0)
+    return np.where(x <= N_DEAD_ZONE, 0.0, (x - N_DEAD_ZONE) / (1.0 - N_DEAD_ZONE) * max_amount)
+
+
+def n_unit(amount, max_amount: float):
+    """Inverse of n_amount: applied amount(s) -> unit-box value (0 for none)."""
+    a = np.clip(np.asarray(amount, dtype=float) / max_amount, 0.0, 1.0)
+    return np.where(a <= 0.0, 0.0, N_DEAD_ZONE + (1.0 - N_DEAD_ZONE) * a)
 
 
 # -- lever geometry ---------------------------------------------------------------------------
@@ -346,7 +360,6 @@ def decisions(lever: str) -> tuple[Decision, ...]:
 
 def measured_x(lever: str) -> np.ndarray:
     """The measured practice's value at every decision (the zero-policy / CMA-ES start)."""
-    from ..plan import n_unit
     xs = []
     caps = irr_cap()
     for d in decisions(lever):

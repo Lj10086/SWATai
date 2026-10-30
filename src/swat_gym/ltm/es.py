@@ -1,7 +1,7 @@
-"""OpenAI-ES (Salimans et al. 2017, arXiv:1703.03864) for LTM policies; the crop benchmark's
-ES (experiments/crops_ga.es_seed) with the LTM episode, observation and strategy score.
+"""OpenAI-ES (Salimans et al. 2017, arXiv:1703.03864) for LTM policies: the legacy crop benchmark's
+ES (legacy/src/swat_gym/experiments/crops_ga.py) with the LTM episode, observation and score.
 
-Chosen over PPO and the GA on the crop benchmark (runs/bench_*_xl.json, 9 crop x lever
+Chosen over PPO and the GA on that benchmark (runs/bench_*_xl.json, 9 crop x lever
 cases, 4 seeds, 60k candidate-seasons): never resolvably worse than PPO, resolvably better on
 3 of 4 N cases (best-of-runs picked on train, ci95_boot excludes 0; wheat N identical for every
 method), unresolved on all 5 I cases.
@@ -26,7 +26,6 @@ import numpy as np
 
 from ..engine import EngineError
 from ..experiments.common import MAX_FAILURE_FRAC, MIN_FAILURES
-from ..experiments.crops_ga import _orthogonal
 from .env import OBS_DIM, run_policy
 from .econ import LtmPrices
 from .practice import CROPS, decisions
@@ -46,10 +45,19 @@ ES = {"version": 2, "population": 16, "windows": len(TRAIN), "sigma": 0.02, "hid
       "init": "orthogonal, gain sqrt(2) hidden / 0.01 output (SB3 actor)"}
 
 
+def _orthogonal(rng, rows: int, cols: int, gain: float) -> np.ndarray:
+    """Orthogonal init (as SB3/PyTorch): a QR of a Gaussian matrix, sign-fixed, times gain."""
+    a = rng.standard_normal((max(rows, cols), min(rows, cols)))
+    q, r = np.linalg.qr(a)
+    q *= np.sign(np.diag(r))
+    q = q if rows >= cols else q.T
+    return gain * q[:rows, :cols]
+
+
 def centered_ranks(x: np.ndarray) -> np.ndarray:
     """Ranks of x scaled to [-0.5, 0.5], ties sharing their mean rank, so a tied population
     gives no gradient (only the L2 decay toward the zero genome = measured practice acts).
-    crops_ga.centered_ranks breaks ties by order; it stays as is for the crop benchmark."""
+    (The legacy crop benchmark's version broke ties by order.)"""
     x = np.asarray(x, float)
     order = np.argsort(x, kind="stable")
     r = np.empty(len(x))

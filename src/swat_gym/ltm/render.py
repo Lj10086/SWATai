@@ -1,7 +1,7 @@
 """Episode plan -> one HRU's 9-year schedule (spin-up year + 8 seasons).
 
-Ops per calendar year in date order, each year closed by a ``skip`` (swat_gym.crop's
-convention). Same-day order: probe, fertiliser/manure, tillage, plant, irrigation, harvest.
+Ops per calendar year in date order, each year closed by a ``skip``
+(the convention of the legacy crop models). Same-day order: probe, fertiliser/manure, tillage, plant, irrigation, harvest.
 Probes are 0-kg ``elem_n`` passes (inert: verified against no-probe runs, PROVENANCE LTM)
 whose mgt_out rows give the soil NO3 / solution P / soil water a decision observes.
 """

@@ -14,7 +14,7 @@ Per lever, for each strategy w in {1, 0.5, 0} (ltm.score.STRATEGIES):
 all scored on the test windows. For R, compare against ``default`` (the trial rotation under
 the same auto-irrigation rule as every Exp 1 plan): ``measured`` also changes the irrigation
 method, which alone cuts leaching ~20-fold here. Paired per-window differences with the moving-block
-bootstrap and ESS intervals (experiments.common.paired; rule 7) for the strategy score,
+bootstrap and ESS intervals (swat_gym.stats.paired; rule 7) for the strategy score,
 relative yield (ry), profit (reported, not scored) and every sustainability term.
 
 Relative yield needs one reference yield per crop (``crop_reference``, user decision
@@ -55,7 +55,8 @@ from ..ltm.render import EpisodePlan, validate
 from ..ltm.runner import LtmRunner
 from ..ltm.score import STRATEGIES, TERMS, Reference, episode, relative_yield
 from ..ltm.windows import SEASONS, TEST, TEST_ESS, TRAIN, TRAIN_ESS, WINDOW_LEN
-from .common import default_workers, load_stage, minimise, paired, save_stage
+from ..stats import paired
+from .common import default_workers, load_stage, minimise, save_stage
 
 EXP = {"R": 1, "N": 2, "I": 3}
 OUT = PROJECT_ROOT / "runs"
@@ -82,8 +83,8 @@ def practice_key(lever: str) -> dict:
 
 
 def _rows(eps: list[dict], key: str) -> list[dict]:
-    """paired() rows: it differences the "profit" field per start year."""
-    return [{"start_year": e["start"], "profit": e[key]} for e in eps]
+    """paired() rows: one metric per window."""
+    return [{"start_year": e["start"], "value": e[key]} for e in eps]
 
 
 def run_plans(plans: list[EpisodePlan], windows, prices, k: int = 16) -> list[list[dict]]:
@@ -213,7 +214,7 @@ def main(argv=None) -> dict:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--lever", choices=list(EXP), required=True)
-    ap.add_argument("--budget", type=int, default=3000 if smoke else 200_000)
+    ap.add_argument("--budget", type=int, default=3000 if smoke else 100_000)
     ap.add_argument("--seeds", type=int, default=1 if smoke else 4)
     ap.add_argument("--workers", type=int, default=default_workers())
     ap.add_argument("--strategies", nargs="*", default=list(STRATEGIES))

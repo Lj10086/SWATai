@@ -417,6 +417,14 @@ def page(T: dict, meas: pd.DataFrame, check: dict, mass: float, auto_check: dict
     bars = [bar_panel(f"{CASES[c][0]}, 52A", M[(M.case == c) & (M.treatment == "52A")]
                       .set_index("month").irr_gross_mm, CASE_COL[c], "Gross mm/month", ymax)
             for c in CASES]
+    irr52 = {c: M[(M.case == c) & (M.treatment == "52A")].set_index("month").irr_gross_mm for c in CASES}
+    together = (case_legend()
+                + line_panel("All three cases, 52A: monthly", [(CASES[c][0], CASE_COL[c], irr52[c])
+                                                                for c in CASES],
+                             "Gross mm/month", "mm", step=True)
+                + line_panel("All three cases, 52A: cumulative since Jan 2013",
+                             [(CASES[c][0], CASE_COL[c], irr52[c].cumsum()) for c in CASES],
+                             "Gross mm, cumulative", "mm", step=True))
     yr = M.assign(year=M.month.dt.year).groupby(["case", "treatment", "year"]).irr_gross_mm.sum()
     rows = [[esc(TRT_LABEL[t]), esc(CASES[c][0])] + [num(yr[(c, t, y)], 0) for y in range(FIRST, LAST + 1)]
             + [num(sum(yr[(c, t, y)] for y in range(FIRST, LAST + 1)), 0)]
@@ -425,7 +433,10 @@ def page(T: dict, meas: pd.DataFrame, check: dict, mass: float, auto_check: dict
                  "<p>Gross applied water (mm/month). SWAT+ puts amount × efficiency into the soil; "
                  "gross = hru_wb <code>irr</code> ÷ efficiency. The bars show 52A; the fertilizer-only "
                  "and control plots get the same measured events. " + auto_note
-                 + " Hover a bar for its value.</p>" + "".join(bars)
+                 + "</p><h3>All irrigation schedules together</h3>"
+                 "<p>The three cases on shared axes: monthly gross depth, then the running total. "
+                 "Hover for every case's value in that month.</p>" + together
+                 + "<h3>Each case separately</h3><p>Hover a bar for its value.</p>" + "".join(bars)
                  + "<h3>Yearly gross irrigation (mm)</h3>"
                  + table(["Treatment", "Case"] + [str(y) for y in range(FIRST, LAST + 1)] + ["Total"], rows)
                  + f"<p>Check: auto-irrigation at eff 1.0 applies {auto_check['sim_mm']:,.1f} mm to 52A "

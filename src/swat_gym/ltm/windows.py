@@ -5,7 +5,7 @@ Train and test share zero calendar years (CLAUDE.md rule 7); 2010 is a buffer.
 """
 from __future__ import annotations
 
-from ..windows import effective_n
+from ..stats import effective_n
 
 SEASONS = 8
 WINDOW_LEN = SEASONS + 1           #: spin-up + seasons

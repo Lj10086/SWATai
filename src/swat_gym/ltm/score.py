@@ -13,7 +13,7 @@ Sustainability terms (CLAUDE.md "Locked design"), means over the 8 seasons:
           divided by that season's efficiency (render.season_irr_eff)
   p       P lost (surface soluble + sediment + leached) plus any net rise in profile solution P
           between Jan 2 of season 1 and Dec 30 of season 8 (mgt_out probes), kg/ha/yr
-  n2o     IPCC Tier 1 on applied manure + mineral N and leached NO3 (rewarders.ipcc_n2o),
+  n2o     IPCC Tier 1 on applied manure + mineral N and leached NO3 (ipcc_n2o below),
           kg N2O/ha/yr -- accounting only; SWAT+ does not simulate N2O
 
 Strategy w in {1, 0.5, 0} (user decision 2026-10-25, retiring rule 1's frontier; yield in
@@ -30,11 +30,42 @@ from functools import lru_cache
 import numpy as np
 import pandas as pd
 
-from ..rewarders import ipcc_n2o
 from .econ import LtmPrices
 from .practice import MAP, MAP_N, MAP_P, N_PRODUCT, SPINUP_FERT
 from .render import PROBE, EpisodePlan, manure_applied, season_irr_eff, season_of, stand_year
 from .windows import SEASONS
+
+# IPCC 2019 Tier 1 defaults. Accounting only: SWAT+ does not simulate N2O.
+# EF5 is applied to simulated no3_rchg instead of FracLEACH x applied N.
+# Verified 2026-10-25 against the 2019 Refinement to the 2006 IPCC Guidelines, Vol. 4 Ch. 11
+# (Hergoualc'h et al. 2019), Table 11.1 (updated: aggregated EF1 0.010) and Table 11.3
+# (updated: aggregated EF4 0.010, EF5 0.011, FracGASF 0.11, FracGASM 0.21). Kimberly is a dry
+# climate there (annual P/PET < 1), whose disaggregated (Tier 2 option) EF1 and EF4 are 0.005.
+IPCC_EF1 = 0.010        #: direct N2O-N per kg N applied
+IPCC_EF4 = 0.010        #: N2O-N per kg N volatilised
+IPCC_EF5 = 0.011        #: N2O-N per kg N leached
+IPCC_FRACGASF = 0.11    #: volatilised fraction, synthetic N
+IPCC_FRACGASM = 0.21    #: volatilised fraction, manure N
+N2O_N_TO_N2O = 44.0 / 28.0
+
+
+def ipcc_n2o(*, manure_n_kg: float, mineral_n_kg: float, no3_leached_kg: float) -> dict:
+    """IPCC Tier 1 N2O (kg N2O/ha), split by pathway."""
+    n_applied = float(manure_n_kg) + float(mineral_n_kg)
+    direct = n_applied * IPCC_EF1
+    volatilised = (float(mineral_n_kg) * IPCC_FRACGASF
+                   + float(manure_n_kg) * IPCC_FRACGASM)
+    indirect_vol = volatilised * IPCC_EF4
+    indirect_leach = float(no3_leached_kg) * IPCC_EF5
+    n2o_n = direct + indirect_vol + indirect_leach
+    return {
+        "n2o_kg": n2o_n * N2O_N_TO_N2O,
+        "n2o_direct_kg": direct * N2O_N_TO_N2O,
+        "n2o_volat_kg": indirect_vol * N2O_N_TO_N2O,
+        "n2o_leach_kg": indirect_leach * N2O_N_TO_N2O,
+        "n_applied_kg": n_applied,
+    }
+
 
 TERMS = ("no3", "water", "p", "n2o")
 STRATEGIES = {"yield": 1.0, "balanced": 0.5, "sustainability": 0.0}

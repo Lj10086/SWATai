@@ -1,6 +1,6 @@
 """Closed-loop LTM episodes: one step per decision point of a lever (practice.decisions).
 
-As ``swat_gym.crop_env``: every step re-simulates the whole window with the decisions so far
+Every step re-simulates the whole window with the decisions so far
 (undecided monthly amounts = 0; undecided seasons of the rotation = the trial's crop, or
 the first feasible of FILL_ORDER where that would break a rule), so the final step's outputs are exactly the open-loop
 outputs of the final plan (tests/test_ltm.py: episode == open loop, every term), and an
@@ -14,10 +14,9 @@ from __future__ import annotations
 
 import numpy as np
 
-from ..plan import n_amount
 from .practice import (ALFA_STAND, CROPS, N_MONTH_MAX, ROTATION_GAP, ROTATION_NO_REPEAT,
-                       TRIAL_ROTATION, decisions, irr_cap, irr_months, measured_x, n_months,
-                       trial_season)
+                       TRIAL_ROTATION, decisions, irr_cap, irr_months, measured_x, n_amount,
+                       n_months, trial_season)
 from .render import EpisodePlan
 from .windows import SEASONS
 

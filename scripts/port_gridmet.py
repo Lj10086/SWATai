@@ -24,10 +24,11 @@ RH: actual vapour pressure from FAO-56 eq. 17, e_a = (e_s(Tmin) RHmax + e_s(Tmax
 then RH = e_a / ((e_s(Tmax) + e_s(Tmin)) / 2), the same convention port_agrimet.py used for
 the station record (Allen et al. 1998, FAO Irrigation and Drainage Paper 56, ch. 3).
 
-    uv run python scripts/port_gridmet.py                 # fetch (cached) + write the rotation
-    uv run python scripts/port_gridmet.py --crops         # also every model/crops/*/TxtInOut
+    uv run python scripts/port_gridmet.py                 # LTM field (cached download) -> model/ltm
     uv run python scripts/port_gridmet.py --refresh       # re-download
-    uv run python scripts/port_gridmet.py --site ltm      # the long-term manure field -> model/ltm
+    uv run python scripts/port_gridmet.py --site gracenet --only-crops
+                                                          # GRACEnet point -> model/crops/*/TxtInOut
+    uv run python scripts/port_gridmet.py --site gracenet # also the retired legacy/ rotation model
 
 The LTM field (Leytem et al. 2025: 42 33' 4.5" N, 114 21' 14.7" W) is ~3 km west of the
 GRACEnet field and in the adjacent gridMET cell, so it has its own cache.
@@ -47,11 +48,12 @@ import numpy as np
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
-ROTATION = ROOT / "model" / "rotation" / "TxtInOut"
+#: the retired GRACEnet rotation model (site "gracenet")
+ROTATION = ROOT / "legacy" / "model" / "rotation" / "TxtInOut"
 CROPS = ROOT / "model" / "crops"
 CACHE = ROOT / "data" / "gridmet_kimberly_1995_2025.csv"
 META = ROOT / "data" / "gridmet_kimberly_1995_2025.json"
-ET_CSV = ROOT / "data" / "observed_et_gridmet.csv"
+ET_CSV = ROOT / "legacy" / "data" / "observed_et_gridmet.csv"
 
 LAT, LON = 42.540, -114.320   # the field (hru.con), not the AgriMet station
 #: site: (lat, lon, cache stem, target TxtInOut)
@@ -208,7 +210,7 @@ def main() -> None:
     ap.add_argument("--crops", action="store_true", help="also every model/crops/*/TxtInOut")
     ap.add_argument("--only-crops", action="store_true")
     ap.add_argument("--refresh", action="store_true", help="re-download even if cached")
-    ap.add_argument("--site", choices=SITES, default="gracenet")
+    ap.add_argument("--site", choices=SITES, default="ltm")
     ap.add_argument("--from-chunks", type=Path, default=None,
                     help="assemble <var>_<year>.csv NCSS responses from this directory")
     args = ap.parse_args()

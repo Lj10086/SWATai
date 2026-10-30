@@ -27,7 +27,7 @@ L6. **Soil hydraulics are SSURGO** (mukey 80295: AWC 0.20/0.18, Ksat), texture/B
     ~0.12, 0–30 cm) and does not represent the starting soil.
 L7. *Closed 2026-10-25.* IPCC factors verified against the 2019 Refinement Vol. 4 Ch. 11
     Tables 11.1/11.3 (aggregated Tier 1: EF1 0.010, EF4 0.010, EF5 0.011, FracGASF 0.11,
-    FracGASM 0.21; `rewarders.py`). Report as sensitivity: Kimberly is "dry" (P/PET < 1), where
+    FracGASM 0.21; `ltm/score.py`). Report as sensitivity: Kimberly is "dry" (P/PET < 1), where
     the disaggregated EF1 and EF4 are 0.005 (direct N2O roughly halves).
 L8. **8-year episodes give ESS 1.34** on 7 test windows (user decision). Quote ESS intervals.
 L9. *Decided 2026-10-27 (user), replacing 2026-10-25's "no rules":* with no rules Exp 1 grew
@@ -84,8 +84,8 @@ L18. *Fixed 2026-10-28.* ES v1 defects, found in the v3 results:
         then takes full Adam steps along a fake gradient. In Exp 2 every policy reached "no
         manure, no N" by generation ~16, sat there with median = max fitness, and all 4 seeds
         ended identical, $78/ha/yr below the fixed plan. LTM ES now averages tied ranks
-        (`test_tied_fitness_gives_no_gradient`). The crop benchmark keeps the old function so
-        its cited results stay reproducible.
+        (`test_tied_fitness_gives_no_gradient`). The crop benchmark (now `legacy/`) keeps the
+        old function so its cited results stay reproducible.
     (b) ES scored 3 random train windows per generation while CMA-ES scores all 7, so ES
         optimised a noisy subset of the same objective. Its Exp 3 curves peaked mid-run and
         drifted down, and the policy trailed the fixed plan by $50–75/ha/yr on every seed. ES
@@ -108,3 +108,11 @@ L19. *Decided 2026-10-30 (user).* **Relative harvested yield replaces profit in 
     but not across crops. LTM_VERSION 4; every `runs/ltm_exp*` result before it is
     profit-scored and stale. `scripts/ltm_results.py` still reads the "profit" strategy and
     needs rewriting after the reruns. PAPER.md has no LTM methods section yet.
+
+L20. *Decided 2026-10-30 (user).* **Run scope cut to ~6 h.** The v5 batch (8 seeds, Exp 2/3 at
+    200k) was projected at 12–14 h more after 9 h and was killed; only Exp 1 had finished
+    (archived with its 8 seeds in `runs/archive/ltm_v5_20261030/`). Now 4 ES seeds per strategy
+    and 100k HRU-episode steps per seed for every experiment, all three Exp 3 efficiency cases
+    kept (`scripts/run_ltm.sh`). 4 seeds still meets rule 3 (≥ 3). Exp 1 reuses seeds 0–300 of
+    the v5 run (same config). Same day: the retired GRACEnet code, models, data and docs moved
+    to `legacy/` (runnable at commit c37710e); LTM outputs verified byte-identical before/after.

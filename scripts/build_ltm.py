@@ -279,7 +279,7 @@ def write_management(fert_p: str, probes: bool = True) -> None:
 
 # -- HRUs --------------------------------------------------------------------------------------
 def write_hrus() -> None:
-    """k = 3 one-ha HRUs; same wiring as swat_gym.crop._write_batched_inputs."""
+    """k = 3 one-ha HRUs; same wiring as the legacy crop models' batched runs."""
     k = len(TREATMENTS)
     tags = list(TREATMENTS.values())
     lum = rows(TIO / "landuse.lum")

@@ -1,0 +1,55 @@
+{
+ "source": "Monthly irrigation (mm) of each non-trial Exp 1 crop: the train-window mean of its Ai-SWAT-Plus crop model's own decision-table irrigation (model/crops/<csil|alfa>, swat_gym.crop_env.default_x, lever I). Computed by that code before it moved to legacy/ (2026-10-30, commit c37710e); frozen here so the LTM code does not depend on the legacy crop-benchmark modules.",
+ "corn": [
+  [
+   5,
+   63.0
+  ],
+  [
+   6,
+   202.73684210526315
+  ],
+  [
+   7,
+   208.42105263157896
+  ],
+  [
+   8,
+   171.94736842105263
+  ],
+  [
+   9,
+   77.21052631578948
+  ]
+ ],
+ "alfa": [
+  [
+   4,
+   88.57894736842105
+  ],
+  [
+   5,
+   115.10526315789474
+  ],
+  [
+   6,
+   152.52631578947367
+  ],
+  [
+   7,
+   166.26315789473685
+  ],
+  [
+   8,
+   171.0
+  ],
+  [
+   9,
+   142.57894736842104
+  ],
+  [
+   10,
+   22.736842105263158
+  ]
+ ]
+}

@@ -166,7 +166,7 @@ seed, chemicals, custom work, labour and machinery differ by crop (potato costs 
 and without it “pure profit” would simply pick the highest-revenue crop.</p>{t}
 <p>Inputs: water ${b.water:.3f}/mm/ha, manure ${b.manure:.2f}/Mg as applied, urea N
 ${b.fert_n:.2f}/kg, MAP P ${p.fert_p:.2f}/kg, ${b.fert_op:.2f}/ha per pass (all unchanged
-from <code>rewarders.py</code>). Prices: Idaho NASS marketing-year averages 2022–2024
+from <code>ltm/econ.py</code>). Prices: Idaho NASS marketing-year averages 2022–2024
 (Crop Values 2024 and 2025 Summaries); wheat at the <em>other spring wheat</em> price
 ($8.20 / $7.03 / $5.70 per bu), potato $12.50 / $9.63 / $9.02 per cwt. Operating costs:
 University of Idaho Extension, Southcentral Idaho costs-and-returns estimates (EBB3-MB/HRS/SU/

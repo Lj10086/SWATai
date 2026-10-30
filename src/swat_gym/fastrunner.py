@@ -16,8 +16,8 @@ from .manifest import input_files
 from .printprt import GYM_OUTPUTS, trim
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-#: The Kimberly rotation model (paper Exp 1/2). Other models are passed explicitly (see spec.py).
-TXTINOUT = PROJECT_ROOT / "model" / "rotation" / "TxtInOut"
+#: Default model: the LTM scenario (swat_gym.ltm passes it explicitly too).
+TXTINOUT = PROJECT_ROOT / "model" / "ltm" / "TxtInOut"
 
 #: Files an action may rewrite.
 EDITABLE = frozenset({

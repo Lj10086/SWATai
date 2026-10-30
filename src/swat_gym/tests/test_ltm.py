@@ -226,10 +226,11 @@ def test_cache_smaller_than_a_call():
 
 def test_tied_fitness_gives_no_gradient():
     """ES v2: a tied population (a plateau, e.g. Exp 2 applying no N) must not take a step."""
-    from swat_gym.experiments.crops_ga import centered_ranks as by_order
     from swat_gym.ltm.es import centered_ranks
     x = np.random.default_rng(0).standard_normal(16)
-    assert np.allclose(centered_ranks(x), by_order(x))      # unchanged without ties
+    by_order = np.empty(16)
+    by_order[np.argsort(x)] = np.arange(16) / 15 - 0.5
+    assert np.allclose(centered_ranks(x), by_order)         # plain ranks without ties
     u = centered_ranks(np.ones(16))
     assert np.all(u == 0.0) and np.all(u[:8] - u[8:] == 0.0)
 
