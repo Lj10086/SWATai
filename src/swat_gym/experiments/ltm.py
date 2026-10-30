@@ -15,7 +15,13 @@ all scored on the test windows. For R, compare against ``default`` (the trial ro
 the same auto-irrigation rule as every Exp 1 plan): ``measured`` also changes the irrigation
 method, which alone cuts leaching ~20-fold here. Paired per-window differences with the moving-block
 bootstrap and ESS intervals (experiments.common.paired; rule 7) for the strategy score,
-profit and every sustainability term. Sign-inconsistent seeds -> "unresolvable" (rule 3).
+relative yield (ry), profit (reported, not scored) and every sustainability term.
+
+Relative yield needs one reference yield per crop (``crop_reference``, user decision
+2026-10-30): the crop's train-window mean harvested yield when it replaces a season of the
+default rotation (its own management, auto-irrigation at BASE_IRR_EFF, 52A manure), averaged
+over every position the rotation rules allow (alfalfa: a 3-year stand). Shared by every lever
+and efficiency case (runs/ltm_crop_ref.json), so ry is on one scale everywhere. Sign-inconsistent seeds -> "unresolvable" (rule 3).
 
 Irrigation efficiency (practice.IRR_EFF_CASES): auto-irrigation and every lever-generated
 schedule run at ``--irr-eff`` (default the base, 0.80); the measured replay is always at 1.0, so
@@ -43,10 +49,11 @@ from ..ltm import econ
 from ..ltm.env import fill_rotation, plan_from_x
 from ..ltm.es import ES, es_seed
 from ..ltm import practice
-from ..ltm.practice import BASE_IRR_EFF, CROPS, TXTINOUT, decisions, measured_x
+from ..ltm.practice import (ALFA_STAND, BASE_IRR_EFF, CROPS, TRIAL_ROTATION, TXTINOUT,
+                             decisions, measured_x)
 from ..ltm.render import EpisodePlan, validate
 from ..ltm.runner import LtmRunner
-from ..ltm.score import STRATEGIES, TERMS, Reference, episode
+from ..ltm.score import STRATEGIES, TERMS, Reference, episode, relative_yield
 from ..ltm.windows import SEASONS, TEST, TEST_ESS, TRAIN, TRAIN_ESS, WINDOW_LEN
 from .common import default_workers, load_stage, minimise, paired, save_stage
 
@@ -54,9 +61,11 @@ EXP = {"R": 1, "N": 2, "I": 3}
 OUT = PROJECT_ROOT / "runs"
 CYCLE_MAX = 4
 #: Bump when the LTM env's meaning changes (render, scoring, observation).
-LTM_VERSION = 3   # 2: W4 dates/manure basis, auto-irrigation (Exp 1, Exp 3 baseline)
+LTM_VERSION = 4   # 2: W4 dates/manure basis, auto-irrigation (Exp 1, Exp 3 baseline)
 #: (mixed batching, 2026-10-26, changes speed only: test_mixed_batching_equals_single)
 #: 3 (2026-10-27): irrigation efficiency (gross water scored), spin-up beans, rotation rules
+#: 4 (2026-10-30): relative yield replaces profit in the score; yield floor
+REPORTED = ("score", "ry", "profit", *TERMS)
 
 
 def practice_key(lever: str) -> dict:
@@ -112,6 +121,49 @@ class _Objective:
         return _neg_scores(xs, window, *self.args)
 
 
+def substitutions() -> list[tuple[str, tuple[int, ...], tuple[str, ...]]]:
+    """(crop, its 1-based seasons, rotation) for every valid substitution of each crop into the
+    trial rotation: alfalfa as a 3-year stand starting at k, every other crop at season k."""
+    out = []
+    for c in CROPS:
+        span = ALFA_STAND if c == "alfa" else 1
+        for k in range(1, len(TRIAL_ROTATION) - span + 2):
+            ks = tuple(range(k, k + span))
+            crops = tuple(c if j + 1 in ks else x for j, x in enumerate(TRIAL_ROTATION))
+            try:
+                validate(crops)
+            except ValueError:
+                continue
+            out.append((c, ks, crops))
+    missing = set(CROPS) - {c for c, _, _ in out}
+    if missing:
+        raise RuntimeError(f"no valid substitution position for {sorted(missing)}")
+    return out
+
+
+def crop_reference(prices) -> dict:
+    """Per-crop reference yield, t/ha (module docstring); cached in runs/ltm_crop_ref.json."""
+    subs = substitutions()
+    pk = practice_key("R")
+    pk.pop("irr_eff")
+    cfg = {"stage": "crop_reference", "ltm_version": LTM_VERSION, "model": model_hash(TXTINOUT),
+           "train": TRAIN, "practice": pk, "irr_eff": BASE_IRR_EFF,
+           "substitutions": [[c, list(ks), list(cr)] for c, ks, cr in subs]}
+    path = OUT / "ltm_crop_ref.json"
+    done = load_stage(path, cfg)
+    if done is not None:
+        return done["crop_ref"]
+    plans = [EpisodePlan(crops=cr, irr_auto=True, irr_eff=BASE_IRR_EFF) for _, _, cr in subs]
+    eps = run_plans(plans, TRAIN, prices)
+    per: dict = {c: [] for c in CROPS}
+    for (c, ks, _), row in zip(subs, eps):
+        per[c] += [e["season_yield_t"][k - 1] for e in row for k in ks]
+    crop_ref = {c: float(np.mean(v)) for c, v in per.items()}
+    save_stage(path, cfg, {"crop_ref": crop_ref, "n_seasons": {c: len(v) for c, v in per.items()},
+                           "positions": {c: [list(ks) for cc, ks, _ in subs if cc == c] for c in CROPS}})
+    return crop_ref
+
+
 def cycles(max_len: int = CYCLE_MAX) -> list[tuple[str, ...]]:
     """Every distinct valid 8-season rotation that repeats a cycle of length <= max_len."""
     seen, out = set(), []
@@ -149,12 +201,11 @@ def frozen_plan(lever: str, train_eps: list[dict]) -> EpisodePlan:
 
 
 def compare(a: list[dict], b: list[dict]) -> dict:
-    return {k: paired(_rows(a, k), _rows(b, k), window_len=WINDOW_LEN)
-            for k in ("score", "profit", *TERMS)}
+    return {k: paired(_rows(a, k), _rows(b, k), window_len=WINDOW_LEN) for k in REPORTED}
 
 
 def _with_score(eps: list[dict], ref: Reference, w: float) -> list[dict]:
-    return [{**e, "score": ref.score(e, w)} for e in eps]
+    return [{**e, "score": ref.score(e, w), "ry": ref.ry_of(e)} for e in eps]
 
 
 def main(argv=None) -> dict:
@@ -192,9 +243,10 @@ def main(argv=None) -> dict:
             ref_stage["auto"] = run_plans([EpisodePlan(irr_auto=True)], TRAIN + TEST, prices)[0]
         save_stage(stage_dir / "reference.json", cfg, ref_stage)
     n_tr = len(TRAIN)
-    # sustainability's profit floor: default practice's train-mean profit (score.FLOOR_PENALTY)
-    floor = float(np.mean([e["profit"] for e in ref_stage["default"][:n_tr]]))
-    ref = Reference.from_episodes(ref_stage["measured"][:n_tr], floor=floor)
+    crop_ref = crop_reference(prices)
+    # sustainability's yield floor: default practice's train-mean ry (score.FLOOR_PENALTY)
+    floor = float(np.mean([relative_yield(e, crop_ref) for e in ref_stage["default"][:n_tr]]))
+    ref = Reference.from_episodes(ref_stage["measured"][:n_tr], crop_ref, floor=floor)
     report: dict = {"config": {**base_cfg, "budget": args.budget, "seeds": args.seeds,
                                "train_ess": TRAIN_ESS, "test_ess": TEST_ESS,
                                "reference": ref.key()},
@@ -278,15 +330,14 @@ def main(argv=None) -> dict:
                 **({"policy_vs_auto": compare(pol, auto_test)} if auto_test else {}),
                 "adaptivity_value": compare(pol, fz),     # closed loop - its own frozen plan
                 "frozen_crops": list(fz_plan.crops) if lever == "R" else None,
-                "test_means": {k: float(np.mean([e[k] for e in pol]))
-                               for k in ("score", "profit", *TERMS)},
+                "test_means": {k: float(np.mean([e[k] for e in pol])) for k in REPORTED},
             }
         signs = {key: sorted({np.sign(v[key]["score"]["mean"]) for v in per_seed.values()})
                  for key in ("policy_vs_measured", "policy_vs_default", "policy_vs_fixed",
                              "adaptivity_value")}
         report["strategies"][s_name] = {
             "w": w,
-            "test_means": {name: {k: float(np.mean([e[k] for e in eps])) for k in ("score", "profit", *TERMS)}
+            "test_means": {name: {k: float(np.mean([e[k] for e in eps])) for k in REPORTED}
                            for name, eps in (("measured", meas_test), ("default", dflt_test),
                                              ("fixed", fixed_test))
                            + ((("auto", auto_test),) if auto_test else ())},

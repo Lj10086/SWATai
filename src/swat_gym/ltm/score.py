@@ -1,6 +1,11 @@
-"""Profit, sustainability terms, and the three strategies' score, per episode (per ha per year).
+"""Relative yield, sustainability terms, and the three strategies' score, per episode (per ha
+per year). Profit is computed and reported, never scored (user decision 2026-10-30):
 
     profit = revenue - water - manure - mineral N - MAP P - passes - crop operating costs
+
+Relative yield (ry): each season's harvested dry yield (alfalfa: all cuts of the year) divided
+by its crop's reference yield, mean over the 8 seasons. A crop's reference is its train-window
+mean yield when substituted into the default rotation (experiments.ltm.crop_reference).
 
 Sustainability terms (CLAUDE.md "Locked design"), means over the 8 seasons:
   no3     NO3-N leached below the profile, kg/ha/yr      (hru_ls_yr percn)
@@ -11,9 +16,11 @@ Sustainability terms (CLAUDE.md "Locked design"), means over the 8 seasons:
   n2o     IPCC Tier 1 on applied manure + mineral N and leached NO3 (rewarders.ipcc_n2o),
           kg N2O/ha/yr -- accounting only; SWAT+ does not simulate N2O
 
-Strategy w in {1, 0.5, 0} (user decision 2026-10-25, retiring rule 1's frontier):
-    score = w * profit / profit_ref - (1 - w) * mean_k(term_k / term_ref_k)
-with *_ref the train-window means under measured 52A practice (``Reference``).
+Strategy w in {1, 0.5, 0} (user decision 2026-10-25, retiring rule 1's frontier; yield in
+place of profit 2026-10-30):
+    score = w * ry / ry_ref - (1 - w) * mean_k(term_k / term_ref_k)
+with *_ref the train-window means under measured 52A practice (``Reference``). Nothing prices
+water or N at w = 1 (accepted, 2026-10-30): the pure-yield strategy may over-apply both.
 """
 from __future__ import annotations
 
@@ -30,7 +37,7 @@ from .render import PROBE, EpisodePlan, manure_applied, season_irr_eff, season_o
 from .windows import SEASONS
 
 TERMS = ("no3", "water", "p", "n2o")
-STRATEGIES = {"profit": 1.0, "balanced": 0.5, "sustainability": 0.0}
+STRATEGIES = {"yield": 1.0, "balanced": 0.5, "sustainability": 0.0}
 P_LOSS = ("surqsolp", "sedorgp", "sedminp", "lchlabp")
 
 
@@ -96,7 +103,13 @@ def episode(plan: EpisodePlan, out: dict, prices: LtmPrices, start: int) -> dict
         "mineral_n_kg": mineral_n * per, "manure_dm_mg": manure_dm / 1000.0 * per,
         "manure_n_kg": manure_n * per, "map_p_kg": map_p * per, "passes": passes * per,
         "yields_t": yields, "crops": list(plan.crops),
+        "season_yield_t": [yields.get(y, 0.0) for y in years],
     }
+
+
+def relative_yield(ep: dict, crop_ref: dict) -> float:
+    """Mean over the seasons of harvested yield / the season's crop's reference yield."""
+    return float(np.mean([y / crop_ref[c] for c, y in zip(ep["crops"], ep["season_yield_t"])]))
 
 
 @lru_cache(maxsize=None)
@@ -107,47 +120,56 @@ def _dm_fraction(fall: int) -> float:
     return float(r.dm_frac_fresh)
 
 
-#: Sustainability's profit floor (2026-10-28, user decision): an episode earning less than
-#: ``Reference.floor`` (default practice's train-mean profit) loses FLOOR_PENALTY x the
-#: shortfall / reference profit. Graded, so CMA-ES can steer back; $100/ha costs ~0.9 score,
-#: more than any plan gains on the footprint. Without it w = 0 picks "no irrigation" (Exp 3
-#: v3: crops fail, -1,921 $/ha/yr).
+#: Sustainability's yield floor (profit floor 2026-10-28, yield floor 2026-10-30, user
+#: decisions): an episode whose relative yield is below ``Reference.floor`` (default practice's
+#: train-mean ry) loses FLOOR_PENALTY x the shortfall / reference ry. Graded, so CMA-ES can
+#: steer back. Without a floor w = 0 picks "no irrigation" (Exp 3 v3: crops fail).
 FLOOR_PENALTY = 10.0
 
 
 @dataclass(frozen=True)
 class Reference:
-    """Train-window means of measured practice: the strategies' denominators. ``floor``: the
-    sustainability strategy's profit floor ($/ha/yr), or None for no floor."""
-    profit: float
+    """Train-window means of measured practice: the strategies' denominators. ``crop_ref``:
+    t/ha per crop (relative_yield). ``floor``: the sustainability strategy's relative-yield
+    floor, or None for no floor."""
+    ry: float
     terms: dict
+    crop_ref: dict
     floor: float | None = None
 
     def __post_init__(self) -> None:
-        if abs(self.profit) < 1.0:
-            raise ValueError(f"reference profit {self.profit:.2f} $/ha/yr is ~0: cannot normalise")
+        low = {c: v for c, v in self.crop_ref.items() if v < 1e-3}
+        if low:
+            raise ValueError(f"crop reference yields ~0: {low}: cannot normalise")
+        if self.ry < 1e-3:
+            raise ValueError(f"reference relative yield {self.ry:.4f} is ~0: cannot normalise")
         tiny = {k: v for k, v in self.terms.items() if abs(v) < 1e-3}
         if tiny:
             raise ValueError(f"reference terms ~0 under measured practice: {tiny}. A strategy "
                              "cannot be normalised by them; report this and decide.")
 
     @classmethod
-    def from_episodes(cls, eps: list[dict], floor: float | None = None) -> Reference:
-        return cls(float(np.mean([e["profit"] for e in eps])),
-                   {k: float(np.mean([e[k] for e in eps])) for k in TERMS}, floor)
+    def from_episodes(cls, eps: list[dict], crop_ref: dict,
+                      floor: float | None = None) -> Reference:
+        return cls(float(np.mean([relative_yield(e, crop_ref) for e in eps])),
+                   {k: float(np.mean([e[k] for e in eps])) for k in TERMS}, dict(crop_ref), floor)
 
     @classmethod
     def from_key(cls, key: dict) -> Reference:
-        return cls(key["profit"], key["terms"], key.get("floor"))
+        return cls(key["ry"], key["terms"], key["crop_ref"], key.get("floor"))
+
+    def ry_of(self, ep: dict) -> float:
+        return relative_yield(ep, self.crop_ref)
 
     def score(self, ep: dict, w: float) -> float:
         sust = float(np.mean([ep[k] / self.terms[k] for k in TERMS]))
-        s = w * ep["profit"] / self.profit - (1.0 - w) * sust
-        if w == 0.0 and self.floor is not None and ep["profit"] < self.floor:
-            s -= FLOOR_PENALTY * (self.floor - ep["profit"]) / self.profit
+        ry = self.ry_of(ep)
+        s = w * ry / self.ry - (1.0 - w) * sust
+        if w == 0.0 and self.floor is not None and ry < self.floor:
+            s -= FLOOR_PENALTY * (self.floor - ry) / self.ry
         return s
 
     def key(self) -> dict:
-        return {"profit": self.profit, "terms": dict(self.terms), "floor": self.floor,
-                "floor_penalty": FLOOR_PENALTY}
+        return {"ry": self.ry, "terms": dict(self.terms), "crop_ref": dict(self.crop_ref),
+                "floor": self.floor, "floor_penalty": FLOOR_PENALTY}
 

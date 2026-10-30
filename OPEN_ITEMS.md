@@ -91,3 +91,20 @@ L18. *Fixed 2026-10-28.* ES v1 defects, found in the v3 results:
         drifted down, and the policy trailed the fixed plan by $50–75/ha/yr on every seed. ES
         now uses all 7 (about 44 generations at 200k for Exp 3).
 
+L19. *Decided 2026-10-30 (user).* **Relative harvested yield replaces profit in the score**
+    ("we are less familiar with the economics side, and economics ... can fluctuate a lot").
+    ry = mean over the 8 seasons of harvested DM yield ÷ the crop's reference yield; the
+    reference is the crop's train-window mean when substituted into the default rotation
+    (auto-irrigation at 0.80, 52A manure), averaged over every valid position (alfalfa: 3-yr
+    stand), shared by every lever and efficiency case (`runs/ltm_crop_ref.json`: barl 6.31,
+    sgbt 16.62, wwht 5.09, pota 9.38, corn 19.01, alfa 11.30 t DM/ha). score = w·ry/ry_meas −
+    (1−w)·mean_k(term_k/term_k,meas); strategies yield / balanced / sustainability. Profit is
+    computed and reported, never scored. The L17 profit floor becomes a yield floor (default
+    practice's train-mean ry, same 10 × shortfall form). Accepted: nothing charges for water
+    or N at w = 1. Expected weakness, seen in the smoke run: the N lever moves yield almost
+    not at all (crops are rarely N-limited, even on the control in 2013–2017,
+    `runs/ltm_nutrient_summary`), so Exp 2's yield strategy is a near-flat plateau. Relative
+    yield also cancels each crop's absolute bias (potato's under-yield, L5) within a crop,
+    but not across crops. LTM_VERSION 4; every `runs/ltm_exp*` result before it is
+    profit-scored and stale. `scripts/ltm_results.py` still reads the "profit" strategy and
+    needs rewriting after the reruns. PAPER.md has no LTM methods section yet.

@@ -35,6 +35,8 @@ def test_episode_equals_open_loop(lever, prices):
         open_ = episode(plans[0], r.run([plans[0]], START)[0], prices, START)
     for k in SCALARS:
         assert closed[k] == pytest.approx(open_[k], rel=0, abs=1e-9), k
+    assert closed["crops"] == open_["crops"]
+    assert closed["season_yield_t"] == pytest.approx(open_["season_yield_t"], rel=0, abs=1e-9)
 
 
 def test_zero_genome_rotation_is_the_trial():
@@ -232,13 +234,44 @@ def test_tied_fitness_gives_no_gradient():
     assert np.all(u == 0.0) and np.all(u[:8] - u[8:] == 0.0)
 
 
-def test_profit_floor_only_binds_sustainability():
+def _fake_ep(ys, **terms):
+    return {"crops": list(TRIAL_ROTATION), "season_yield_t": list(ys), **terms}
+
+
+def test_yield_floor_only_binds_sustainability():
     from swat_gym.ltm.score import FLOOR_PENALTY, Reference
     terms = {k: 1.0 for k in TERMS}
-    ref = Reference(1000.0, terms, floor=800.0)
+    crop_ref = {c: 10.0 for c in CROPS}
+    ref = Reference(1.0, terms, crop_ref, floor=0.8)
     assert Reference.from_key(ref.key()) == ref
-    ep = {"profit": 700.0, **terms}
-    plain = Reference(1000.0, terms)
-    assert ref.score(ep, 0.0) == plain.score(ep, 0.0) - FLOOR_PENALTY * 100.0 / 1000.0
+    ep = _fake_ep([7.0] * 8, **terms)                  # ry 0.7: 0.1 below the floor
+    plain = Reference(1.0, terms, crop_ref)
+    assert ref.score(ep, 0.0) == pytest.approx(plain.score(ep, 0.0) - FLOOR_PENALTY * 0.1)
     assert ref.score(ep, 0.5) == plain.score(ep, 0.5) and ref.score(ep, 1.0) == plain.score(ep, 1.0)
-    assert ref.score({**ep, "profit": 900.0}, 0.0) == plain.score({**ep, "profit": 900.0}, 0.0)
+    above = _fake_ep([9.0] * 8, **terms)
+    assert ref.score(above, 0.0) == plain.score(above, 0.0)
+
+
+def test_reference_practice_scores_its_normaliser():
+    """Measured practice's own train episodes average to ry / ry_ref = 1 and terms = 1, so
+    their mean score is w - (1 - w) for every strategy; profit plays no part."""
+    from swat_gym.ltm.score import STRATEGIES, Reference
+    rng = np.random.default_rng(0)
+    crop_ref = {c: float(rng.uniform(3, 30)) for c in CROPS}
+    eps = [_fake_ep(rng.uniform(2, 40, 8), profit=float(rng.normal()),
+                    **{k: float(rng.uniform(1, 9)) for k in TERMS}) for _ in range(7)]
+    ref = Reference.from_episodes(eps, crop_ref)
+    for w in STRATEGIES.values():
+        assert np.mean([ref.score(e, w) for e in eps]) == pytest.approx(w - (1 - w))
+    with pytest.raises(ValueError):
+        Reference(1.0, {k: 1.0 for k in TERMS}, {**crop_ref, "pota": 0.0})
+
+
+def test_crop_reference_substitutions_are_valid():
+    from swat_gym.experiments.ltm import substitutions
+    subs = substitutions()
+    assert {c for c, _, _ in subs} == set(CROPS)
+    for c, ks, crops in subs:
+        validate(crops)
+        assert all(crops[k - 1] == c for k in ks)
+        assert all(x == t for j, (x, t) in enumerate(zip(crops, TRIAL_ROTATION)) if j + 1 not in ks)
